@@ -1,7 +1,94 @@
 <!DOCTYPE html>
 <html>
-    <head></head>
+    <head>
+        <style>
+            .bobprg {
+                display:none;
+            }
+        </style>
+    </head>
     <body>
         <h1>Bob Simulator</h1>
+        <span class="bobprg">
+bob.prg.entry:
+    CALL        main ()
+    STOP
+main.top:
+    BRA         main.bot
+    POP         $raddr
+main:
+    SWRET       $raddr
+    NEG         $raddr
+    PUSH        $raddr
+    # main body
+    # main declarations
+    PUSH        $0
+    XOR         $x  $spointer
+    CALL        f  ($x)
+    # main undeclarations
+    POP         $res.x
+main.bot:
+    BRA         main.top
+f.top:
+    BRA         f.bot
+    POP         $raddr
+f:
+    SWRET       $raddr
+    NEG         $raddr
+    PUSH        $raddr
+    # f body
+    # local[a = 200](5, 5)
+    XORI        $f.1  200
+    XOR         $f.0  $f.1
+    PUSH        $f.0
+    XOR         $f.a.0  $spointer
+    XORI        $f.1  200
+    # /local[a = 200](5, 5)
+    # x += a
+    EXCH        $f.3  $arg0
+    EXCH        $f.4  $f.a.0
+    XOR         $f.5  $f.4
+    EXCH        $f.4  $f.a.0
+    ADD         $f.3  $f.5
+    EXCH        $f.4  $f.a.0
+    XOR         $f.5  $f.4
+    EXCH        $f.4  $f.a.0
+    EXCH        $f.3  $arg0
+    # /x += a
+    # a -= 30
+    EXCH        $f.6  $f.a.0
+    XORI        $f.7  30
+    SUB         $f.6  $f.7
+    XORI        $f.7  30
+    EXCH        $f.6  $f.a.0
+    # /a -= 30
+    # delocal[a = 160](8, 19)
+    XORI        $f.2  160
+    XOR         $f.a.0  $spointer
+    POP         $f.0
+    XOR         $f.0  $f.2
+    XORI        $f.2  160
+    # /delocal[a = 160](8, 19)
+f.bot:
+    BRA         f.top
+        </span>
+        <p id="ud1"></p>
+        <p id="ud2"></p>
+        <p id="ud3"></p>
+        <script src="stack.js"></script>
+        <script src="machine.js"></script>
+        <script src="bob.js"></script>
+        <script>
+var printfn = function(){
+    var felt = document.getElementById("ud1");
+    return function(str){
+        felt.innerHTML += str + "<br>";
+        };
+    }();
+var prgs = document.getElementsByClassName("bobprg");
+var machine = new Machine();
+var bob = new BobSim(machine);
+bob.exec(prgs[0].innerHTML)
+        </script>
     </body>
 </html>

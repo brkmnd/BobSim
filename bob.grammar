@@ -1,0 +1,43 @@
+#caps
+token -cap "reg","imm","id" as "\\$[^ ()\\n]+","[0-9]+","[a-zA-Z<>_@][^ ()\\n]*"
+#operators - arit
+token "plus","minus","times" as "\\+","-","\\*"
+#operators
+token "colon","comma" as ":",","
+#parentheses
+token "lbracket","lpar","rbracket","rpar" as "\\[","(","\\]",")"
+#delims
+token "eol" as "\\n|;"
+#comments
+!token "#[^\\n]*| *|\\t*"
+
+prec "plus" 1
+prec "minus" 1
+prec "times" 2
+
+assoc "left" : "plus","minus","times"
+
+#Productions
+prod Lines      -> 
+                 | Stmt "eol" Lines
+prod Stmt       ->
+                 | "id" StmtType
+prod StmtType   -> "colon"
+                 | Args
+prod Args       ->
+                 | "reg" Args
+                 | "imm" Args
+                 | "id" Args
+                 | "lbracket" ArgM "rbracket" Args
+                 | "lpar" ArgList "rpar" Args
+prod ArgM       -> ArgM "plus" ArgM
+                 | ArgM "minus" ArgM
+                 | ArgM "times" ArgM
+                 | ArgMLit
+prod ArgMLit    -> "lbracket" ArgM "rbracket"
+                 | "reg"
+                 | "imm"
+prod ArgList    ->
+                 | "reg" ArgListC
+prod ArgListC   ->
+                 | "comma" "reg" ArgListC
