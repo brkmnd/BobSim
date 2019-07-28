@@ -30,19 +30,19 @@ var BobSim = function(machine){
         //m.t = some/none
         //m.v = value if some, else null
         if(o[m.tt] !== undefined){
-            return o[m.tt](m.tt,m.tv);
+            return o[m.tt](m.tt,m.tv,{x:m.posX,y:m.posY});
             }
         };
     var addToken2tree = function(tree,node){
         _token(node,{
-            "reg":function(tokenType,tokenVal){
-                tree.push({type:"reg",v:tokenVal});
+            "reg":function(tokenType,tokenVal,pos){
+                tree.push({type:"reg",v:tokenVal,pos:pos});
                 },
-            "imm":function(tokenType,tokenVal){
-                tree.push({type:"imm",v:tokenVal});
+            "imm":function(tokenType,tokenVal,pos){
+                tree.push({type:"imm",v:tokenVal,pos:pos});
                 },
-            "id":function(tokenType,tokenVal){
-                tree.push({type:"id",v:tokenVal});
+            "id":function(tokenType,tokenVal,pos){
+                tree.push({type:"id",v:tokenVal,pos:pos});
                 }
            });
         return tree;
@@ -70,7 +70,11 @@ var BobSim = function(machine){
                 labels[id.v] = absyn.length;
                 }
             else {
-                absyn.push({instr:id.v.toLowerCase(),args:t.v.reverse()});
+                absyn.push({
+                    pos:id.pos,
+                    instr:id.v.toLowerCase(),
+                    args:t.v.reverse()
+                    });
                 }
             return tree;
             },
@@ -1450,13 +1454,195 @@ var BobSim = function(machine){
             printfn(str);
             }
         };
+
+    var printPos = function(pos){
+        if(pos !== null){
+            return "(" + pos.y.toString() + "," + pos.x.toString() + ")";
+            }
+        return "(-1,-1)";
+        };
+    var updatePos = function(pos){
+        if(pos.dir === 0){
+            if(pos.br === 0){
+                pos.pc += 1;
+                return pos;
+                }
+            pos.pc += pos.br;
+            return pos;
+            }
+        if(pos.br === 0){
+            pos.pc -= 1;
+            return pos;
+            }
+        pos.pc -= pos.br;
+        return pos;
+        };
+    var dummyArgImm = {type:"imm"};
+    var dummyArgReg = {type:"reg"};
+    var dummyArgId = {type:"id"};
+    var dummyArgAppArgs = {type:"app-args"};
+    var arg2typeSig = function(arg){
+        switch(arg.type){
+            case "imm": return "0";
+            case "reg": return "1";
+            case "id":  return "2";
+            case "app-args": return "3";
+            default:
+                alert("missing arg2typeSig: " + arg.type);
+                return "4";
+            } 
+        };
+    var args2typeSig = function(args){
+        var retval = "";
+        for(var i = 0; i < args.length; i++){
+            retval += arg2typeSig(args[i]);
+            }
+        return retval;
+        };
+    var argsSigReg = args2typeSig([dummyArgReg]);
+    var argsSigRegReg = args2typeSig([dummyArgReg,dummyArgReg]);
+    var argsSigRegRegReg = args2typeSig([
+        dummyArgReg,
+        dummyArgReg,
+        dummyArgReg
+    ]);
+    var argsSigRegImm = args2typeSig([dummyArgReg,dummyArgImm]);
+    var argsSigId = args2typeSig([dummyArgId]);
+    var argsSigArit = [argsSigRegReg,argsSigRegImm];
+    var statusEval = {
+        prgLen:0,
+        running:true,
+        error:false,
+        msgError:null,
+        msgStatus:null,
+        warnings:[],
+        traceJumps:[],
+        fail:function(instr,msg){
+            var msg0 = function(){
+                if(instr !== null){
+                    var res =
+                        m + " at " +
+                        instr.instr.toUpperCase() + " " +
+                        printPos(instr.pos) +
+                        ": ";
+                    return res;
+                    }
+                return m + ": ";
+                }();
+            statusEval.running = false;
+            statusEval.error = true;
+            statusEval.msgError = msg0 + msg;
+            },
+        stop:function(instr,msg){
+            var msg0 = function(){
+                var m = "execution stopped";
+                if(instr !== null){
+                    var res =
+                        m + " at " +
+                        instr.instr.toUpperCase() + " " +
+                        printPos(instr.pos) +
+                        ": ";
+                    return res;
+                    }
+                return m + ": ";
+                }();
+            statusEval.running = false;
+            statusEval.msgStatus = msg0 + msg;
+            },
+        addWarning:function(msg){
+            statusEval.warnings.push(msg);
+            },
+        reset:function(){
+            statusEval.prgLen = 0;
+            statusEval.running = true;
+            statusEval.error = false;
+            statusEval.msgStatus = null;
+            statusEval.msgError = null;
+            statusEval.warnings = [];
+            statusEval.traceJumps = [];
+            }
+        };
+    var checkArgType = function(instr,sig){
+        if(instr.givenSig === undefined){
+            instr.givenSig = args2typeSig(instr.args);
+            }
+        return sig.indexOf(instr.givenSig) > -1;
+        };
+    var evalInstr = function(model,instr){
+        switch(instr.instr){
+            case "swap":
+                var sig = [argsSigRegReg];
+                break;
+            case "add":
+                var sig = argsSigArit;
+                break;
+            case "add1":
+                var sig = argsSigReg;
+                break;
+            case "sub":
+                var sig = argsSigArit;
+                break;
+            case "sub1":
+                var sig = argsSigReg;
+                break;
+            case "mul":
+                var sig = argsSigRegRegReg;
+                break;
+            case "mul2":
+                var sig = argsSigReg;
+                break;
+            case "div":
+                var sig = argsSigRegRegReg;
+                break;
+            case "div2":
+                var sig = argsSigReg;
+                break;
+            case "neg":
+                var sig = argsSigReg;
+                break;
+            case "mod":
+                var sig = argsSigRegRegReg;
+                break;
+            case "xor":
+                var sig = argsSigRegReg;
+                //var t = checkArgType(instr,[argsSigReg]);
+                break;
+            default:
+                //printfn("not yet instr: "+instr.instr);
+                break;
+            }
+        };
+    var evalPrg = function(prg,labels){
+        var pos = {pc:0,br:0,dir:0};
+        var model = {mem:machine.mem,regs:machine.regs,pos:pos};
+        statusEval.reset();
+        statusEval.prgLen = prg.length;
+        while(statusEval.running){
+            var instr = prg[pos.pc];
+            evalInstr(model,instr);
+            model.pos = updatePos(model.pos);
+            if(model.pos.pc < 0){
+                statusEval.stop(instr,"pc < 0");
+                }
+            if(model.pos.pc >= prg.length){
+                statusEval.stop(instr,"pc > prg.length");
+                }
+            }
+        if(statusEval.error){
+            alert("error:"+statusEval.msgError);
+            }
+        else {
+            alert(statusEval.msgStatus);
+            }
+        };
     return {
         exec:function(input){
             var lexed = lexer(input);
             //printTokens(lexed)
             var parsed = parser(lexed);
-            printAbSyn(parsed.absyn);
-            printLabels(parsed.labels);
+            //printAbSyn(parsed.absyn);
+            //printLabels(parsed.labels);
+            evalPrg(parsed.absyn,parsed.labels);
             }
         };
     };
