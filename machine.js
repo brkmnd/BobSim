@@ -61,7 +61,6 @@ var Machine = function(){
         ret.error = null;
         ret.reset = function(){
             ret.segfault = null;
-            ret.reset = null;
             };
         return ret;
         }();

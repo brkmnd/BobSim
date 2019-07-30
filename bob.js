@@ -39,7 +39,7 @@ var BobSim = function(machine){
                 tree.push({type:"reg",v:tokenVal,pos:pos});
                 },
             "imm":function(tokenType,tokenVal,pos){
-                tree.push({type:"imm",v:tokenVal,pos:pos});
+                tree.push({type:"imm",v:parseInt(tokenVal),pos:pos});
                 },
             "id":function(tokenType,tokenVal,pos){
                 tree.push({type:"id",v:tokenVal,pos:pos});
@@ -1501,14 +1501,35 @@ var BobSim = function(machine){
         };
     var argsSigReg = args2typeSig([dummyArgReg]);
     var argsSigRegReg = args2typeSig([dummyArgReg,dummyArgReg]);
+    var argsSigRegId = args2typeSig([dummyArgReg,dummyArgId]);
     var argsSigRegRegReg = args2typeSig([
         dummyArgReg,
         dummyArgReg,
         dummyArgReg
     ]);
     var argsSigRegImm = args2typeSig([dummyArgReg,dummyArgImm]);
+    var argsSigRegRegId = args2typeSig([
+        dummyArgReg,
+        dummyArgReg,
+        dummyArgId
+        ]);
     var argsSigId = args2typeSig([dummyArgId]);
+    var argsSigMemId = args2typeSig(
+        // need to be included in absyn
+        []
+        );
+    var argsSigMemMemId = args2typeSig([
+        //dummyArgMem,
+        //dummyArgMem,
+        dummyArgId
+        ]);
+    // List of sigs
     var argsSigArit = [argsSigRegReg,argsSigRegImm];
+    var argsSigBr1 = [argsSigRegId];
+    var argsSigBr2 = [
+        argsSigMemMemId,
+        argsSigRegRegId
+        ];
     var statusEval = {
         prgLen:0,
         running:true,
@@ -1532,6 +1553,9 @@ var BobSim = function(machine){
             statusEval.running = false;
             statusEval.error = true;
             statusEval.msgError = msg0 + msg;
+            },
+        failSegfault:function(instr){
+            statusEval.fail(instr,"segfault");
             },
         stop:function(instr,msg){
             var msg0 = function(){
@@ -1566,46 +1590,149 @@ var BobSim = function(machine){
         if(instr.givenSig === undefined){
             instr.givenSig = args2typeSig(instr.args);
             }
-        return sig.indexOf(instr.givenSig) > -1;
+        var i = sig.indexOf(instr.givenSig);
+        if(i > -1){
+            return sig[i];
+            }
+        return null;
+        //return sig.indexOf(instr.givenSig) > -1;
         };
     var evalInstr = function(model,instr){
+        var argRead = function(arg){
+            switch(arg.type){
+                case "reg":
+                    var v = model.regs.read(arg.v);
+                    return v;
+                //case "mem": return 0;
+                case "imm":
+                    return arg.v;
+                default:
+                    alert("unset arg type "+arg.type);
+                }
+            };
+        var argWrite = function(arg,v){
+            switch(arg.type){
+                case "reg":
+                    model.regs.write(arg.v,v);
+                    return true;
+                case "mem":
+                    model.mem.write(arg.v,v);
+                    return true;
+                default:
+                    return false;
+                }
+            };
+        var execInstr = function(sig,f){
+            var t = checkArgType(instr,sig);
+            if(t !== null){
+                f(t);
+                return true;
+                }
+            return false;
+            };
         switch(instr.instr){
             case "swap":
                 var sig = [argsSigRegReg];
                 break;
             case "add":
                 var sig = argsSigArit;
+                var f = function(t){
+                    // check if args are same
+                    var a = argRead(instr.args[0]);
+                    var b = argRead(instr.args[1]);
+                    var res = model.pos.dir === 0 ? a + b : a - b;
+                    alert("res +:" + res);
+                    argWrite(instr.args[0],res);
+                    };
+                execInstr(sig,f);
                 break;
             case "add1":
-                var sig = argsSigReg;
+                var sig = [argsSigReg];
+                var f = function(t){
+                    var a = argRead(instr.args[0]);
+                    var res = model.pos.dir === 0 ? a + 1 : a - 1; 
+                    argWrite(instr.args[0],res);
+                    };
+                execInstR(sig,f);
                 break;
             case "sub":
                 var sig = argsSigArit;
                 break;
             case "sub1":
-                var sig = argsSigReg;
+                var sig = [argsSigReg];
                 break;
             case "mul":
-                var sig = argsSigRegRegReg;
+                var sig = [argsSigRegRegReg];
                 break;
             case "mul2":
-                var sig = argsSigReg;
+                var sig = [argsSigReg];
                 break;
             case "div":
-                var sig = argsSigRegRegReg;
+                var sig = [argsSigRegRegReg];
                 break;
             case "div2":
-                var sig = argsSigReg;
+                var sig = [argsSigReg];
                 break;
             case "neg":
-                var sig = argsSigReg;
+                var sig = [argsSigReg];
                 break;
             case "mod":
-                var sig = argsSigRegRegReg;
+                var sig = [argsSigRegRegReg];
                 break;
             case "xor":
-                var sig = argsSigRegReg;
-                //var t = checkArgType(instr,[argsSigReg]);
+                var sig = [argsSigRegReg];
+                var f = function(t){
+                    var a = argRead(instr.args[0]);
+                    var b = argRead(instr.args[1]);
+                    var res = a ^ b;
+                    argWrite(instr.args[0],res);
+                    };
+                execInstr(sig,f);
+                break;
+            case "xori":
+                var sig = [argsSigRegImm];
+                var f = function(t){
+                    var a = argRead(instr.args[0]);
+                    var b = argRead(instr.args[1]);
+                    var res = a ^ b;
+                    argWrite(instr.args[0],res);
+                    };
+                execInstr(sig,f);
+                break;
+            case "and":
+                var sig = [argsSigRegRegReg];
+                break;
+            case "or":
+                var sig = [argsSigRegRegReg];
+                break;
+            // Memory
+            case "exch":
+                var sig = [argsSigRegReg];
+                var f = function(t){
+                    var a = argRead(instr.args[0]);
+                    var b = argRead(instr.args[1]);
+                    if(machine.fail.segfault !== null){
+                        statusEval.failSegfault(instr);
+                        }
+                    else {
+                        argWrite(instr.args[0],b);
+                        argWrite(instr.args[1],a);
+                        }
+                    };
+                execInstr(sig,f);
+                break;
+            // Branch
+            case "bz":
+                var sig = argsSigBr1;
+                break;
+            case "bnz":
+                var sig = argsSigBr1;
+                break;
+            case "beq":
+                var sig = argsSigBr2;
+                break;
+            case "blt":
+                var sig = argsSigBr2;
                 break;
             default:
                 //printfn("not yet instr: "+instr.instr);
@@ -1643,6 +1770,10 @@ var BobSim = function(machine){
             //printAbSyn(parsed.absyn);
             //printLabels(parsed.labels);
             evalPrg(parsed.absyn,parsed.labels);
+            printfn("regs:");
+            machine.regs.foreach(function(n,r){
+                printfn(n + " -> " + r);
+                });
             }
         };
     };
