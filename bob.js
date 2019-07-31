@@ -1499,6 +1499,7 @@ var BobSim = function(machine){
             }
         return retval;
         };
+    var argsSigUnit = args2typeSig([]);
     var argsSigReg = args2typeSig([dummyArgReg]);
     var argsSigRegReg = args2typeSig([dummyArgReg,dummyArgReg]);
     var argsSigRegId = args2typeSig([dummyArgReg,dummyArgId]);
@@ -1523,6 +1524,7 @@ var BobSim = function(machine){
         //dummyArgMem,
         dummyArgId
         ]);
+    var argsSigIdApp = args2typeSig([dummyArgId,dummyArgAppArgs]);
     // List of sigs
     var argsSigArit = [argsSigRegReg,argsSigRegImm];
     var argsSigBr1 = [argsSigRegId];
@@ -1537,9 +1539,22 @@ var BobSim = function(machine){
         msgError:null,
         msgStatus:null,
         warnings:[],
-        traceJumps:[],
+        traces:function(){
+            var jmps = [];
+            var ret = {};
+            ret.addJmp = function(instr,taken){
+                jmps.push({instr:instr.instr,pos:instr.pos,taken:taken});
+                };
+            ret.foreachJmps = function(f){
+                for(var i = 0; i < jmps.length; i++){
+                    f(jmps[i]);
+                    }
+                };
+            return ret;
+            }(),
         fail:function(instr,msg){
             var msg0 = function(){
+                var m = "error";
                 if(instr !== null){
                     var res =
                         m + " at " +
@@ -1559,16 +1574,15 @@ var BobSim = function(machine){
             },
         stop:function(instr,msg){
             var msg0 = function(){
-                var m = "execution stopped";
                 if(instr !== null){
                     var res =
-                        m + " at " +
+                        msg + " at " +
                         instr.instr.toUpperCase() + " " +
                         printPos(instr.pos) +
                         ": ";
                     return res;
                     }
-                return m + ": ";
+                return msg + ": ";
                 }();
             statusEval.running = false;
             statusEval.msgStatus = msg0 + msg;
@@ -1586,18 +1600,7 @@ var BobSim = function(machine){
             statusEval.traceJumps = [];
             }
         };
-    var checkArgType = function(instr,sig){
-        if(instr.givenSig === undefined){
-            instr.givenSig = args2typeSig(instr.args);
-            }
-        var i = sig.indexOf(instr.givenSig);
-        if(i > -1){
-            return sig[i];
-            }
-        return null;
-        //return sig.indexOf(instr.givenSig) > -1;
-        };
-    var evalInstr = function(model,instr){
+    var evalInstr = function(model,instr,labels){
         var argRead = function(arg){
             switch(arg.type){
                 case "reg":
@@ -1622,12 +1625,104 @@ var BobSim = function(machine){
                     return false;
                 }
             };
+        var calcOffset = function(arg){
+            var pc = model.pos.pc;
+            var i = 0;
+            switch(arg.type){
+                case "id":
+                    var l = arg.v;
+                    i = labels[l];
+                    if(i === undefined){
+                        var msg = "label '"+l+"' not defined";
+                        statusEval.fail(instr,msg);
+                        return 0;
+                        }
+                    break;
+                default:
+                    alert("not yet in calcOffset");
+                    break;
+                }
+            return i - pc;
+            };
+        var calcBr = function(off){
+            if(model.pos.dir === 0){
+                return model.pos.br + off;
+                }
+            return model.pos.br - off;
+            };
+        var pushStackFrame = function(args){
+            var frame = [];
+            for(var i = 0; i < 3; i++){
+                var argName = "arg" + i.toString();
+                var argOldVal = model.regs.read(argName);
+                var argV = function(){
+                    if(args[i] === undefined){
+                        return 0;
+                        }
+                    return model.regs.read(args[i].v);
+                    }();
+                frame.push({name:argName,v:argOldVal});
+                model.regs.write(argName,argV);
+                }
+            machine.stackFrame.push(frame);
+            };
+        var popStackFrame = function(){ 
+            var frame = machine.stackFrame.pop();
+            var ks = Object.keys(frame);
+            for(var i = 0; i < ks.length; i++){
+                var k = ks[i];
+                model.regs.write(k,frame[k]);
+                }
+            };
+        var instrPop = function(){
+            var sp = model.regs.read("spointer");
+            var regv = argRead(instr.args[0]);
+            var memv = model.mem.read(sp);
+            if(machine.fail.segfault !== null){
+                statusEval.failSegfault(instr);
+                return false;
+                }
+            model.mem.write(sp,regv);
+            argWrite(instr.args[0],memv);
+            model.regs.write("spointer",sp + 1);
+            return true;
+            };
+        var instrPush = function(){
+            // Exch regv <-> memv
+            // spointer points at stack head
+            // that is last inserted value
+            var sp = model.regs.read("spointer");
+            var newSp = sp - 1;
+            var regv = argRead(instr.args[0]);
+            var memv = model.mem.read(newSp);
+            if(machine.fail.segfault !== null){
+                statusEval.failSegfault(instr);
+                return false;
+                }
+            model.mem.write(newSp,regv);
+            argWrite(instr.args[0],memv);
+            model.regs.write("spointer",newSp);
+            return true;
+            };
+        var checkArgType = function(instr,sig){
+            if(instr.givenSig === undefined){
+                instr.givenSig = args2typeSig(instr.args);
+                }
+            var i = sig.indexOf(instr.givenSig);
+            if(i > -1){
+                return sig[i];
+                }
+            return null;
+            //return sig.indexOf(instr.givenSig) > -1;
+            };
         var execInstr = function(sig,f){
             var t = checkArgType(instr,sig);
             if(t !== null){
                 f(t);
                 return true;
                 }
+            alert(t)
+            statusEval.failArgSig(instr,t,sig);
             return false;
             };
         switch(instr.instr){
@@ -1641,7 +1736,6 @@ var BobSim = function(machine){
                     var a = argRead(instr.args[0]);
                     var b = argRead(instr.args[1]);
                     var res = model.pos.dir === 0 ? a + b : a - b;
-                    alert("res +:" + res);
                     argWrite(instr.args[0],res);
                     };
                 execInstr(sig,f);
@@ -1653,13 +1747,26 @@ var BobSim = function(machine){
                     var res = model.pos.dir === 0 ? a + 1 : a - 1; 
                     argWrite(instr.args[0],res);
                     };
-                execInstR(sig,f);
+                execInstr(sig,f);
                 break;
             case "sub":
                 var sig = argsSigArit;
+                var f = function(t){
+                    var a = argRead(instr.args[0]);
+                    var b = argRead(instr.args[1]);
+                    var res = model.pos.dir === 0 ? a - b : a + b;
+                    argWrite(instr.args[0],res);
+                    };
+                execInstr(sig,f);
                 break;
             case "sub1":
                 var sig = [argsSigReg];
+                var f = function(t){
+                    var a = argRead(instr.args[0]);
+                    var res = model.pos.dir === 0 ? a - 1 : a + 1;
+                    argWrite(instr.args[0],res);
+                    };
+                execInstr(sig,f)
                 break;
             case "mul":
                 var sig = [argsSigRegRegReg];
@@ -1675,6 +1782,12 @@ var BobSim = function(machine){
                 break;
             case "neg":
                 var sig = [argsSigReg];
+                var f = function(t){
+                    var a = argRead(instr.args[0]);
+                    var res = 0 - a;
+                    argWrite(instr.args[0],res);
+                    };
+                execInstr(sig,f);
                 break;
             case "mod":
                 var sig = [argsSigRegRegReg];
@@ -1710,18 +1823,28 @@ var BobSim = function(machine){
                 var sig = [argsSigRegReg];
                 var f = function(t){
                     var a = argRead(instr.args[0]);
-                    var b = argRead(instr.args[1]);
+                    var bPtr = argRead(instr.args[1]);
+                    var b = model.mem.read(bPtr);
                     if(machine.fail.segfault !== null){
                         statusEval.failSegfault(instr);
                         }
                     else {
                         argWrite(instr.args[0],b);
-                        argWrite(instr.args[1],a);
+                        model.mem.write(bPtr,a);
                         }
                     };
                 execInstr(sig,f);
                 break;
             // Branch
+            case "bra":
+                var sig = [argsSigId];
+                var f = function(t){
+                    var off = calcOffset(instr.args[0]);
+                    statusEval.traces.addJmp(instr,true);
+                    model.pos.br = calcBr(off);
+                    };
+                execInstr(sig,f);
+                break;
             case "bz":
                 var sig = argsSigBr1;
                 break;
@@ -1734,32 +1857,115 @@ var BobSim = function(machine){
             case "blt":
                 var sig = argsSigBr2;
                 break;
+            case "push":
+                var sig = [argsSigReg];
+                var f = function(t){
+                    if(model.pos.dir === 0){
+                        instrPush();
+                        }
+                    else {
+                        instrPop();
+                        }
+                    };
+                execInstr(sig,f);
+                break;
+            case "pop":
+                var sig = [argsSigReg];
+                var f = function(t){
+                    if(model.pos.dir === 0){
+                        instrPop();
+                        }
+                    else {
+                        instrPush();
+                        }
+                    };
+                execInstr(sig,f);
+                break;
+            case "call":
+                var sig = [argsSigIdApp];
+                var f = function(t){
+                    var appArgs = instr.args[1];
+                    var off = calcOffset(instr.args[0]);
+                    var br = calcBr(off);
+                    statusEval.traces.addJmp(instr,true);
+                    if(br !== 0){
+                        pushStackFrame(appArgs.v);
+                        }
+                    else {
+                        popStackFrame();
+                        }
+                    model.pos.br = br;
+                    };
+                execInstr(sig,f);
+                break;
+            case "swret":
+                var sig = [argsSigReg];
+                var f = function(t){
+                    var newBr = argRead(instr.args[0]);
+                    var oldBr = model.pos.br;
+                    statusEval.traces.addJmp(instr,true);
+                    model.pos.br = newBr;
+                    argWrite(instr.args[0],oldBr);
+                    };
+                execInstr(sig,f);
+                break;
+            case "stop":
+                var sig = [argsSigUnit];
+                var f = function(t){
+                    var msg = "manual stop";
+                    statusEval.stop(instr,msg);
+                    };
+                execInstr(sig,f);
+                break;
             default:
-                //printfn("not yet instr: "+instr.instr);
+                printfn("not yet instr: "+instr.instr,"green");
                 break;
             }
         };
     var evalPrg = function(prg,labels){
         var pos = {pc:0,br:0,dir:0};
         var model = {mem:machine.mem,regs:machine.regs,pos:pos};
+        var jmpTrace = function(){
+            var str = "<h2>Jump Traces</h2>";
+            str += "<table border='1'>";
+            str += "<tr><td>Instruction</td><td>Taken</td></tr>";
+            statusEval.traces.foreachJmps(function(t){
+                str += "<tr>";
+                str += "<td>";
+                str += t.instr;
+                str += " (";
+                str += t.pos.y;
+                str += ",";
+                str += t.pos.x;
+                str += ")";
+                str += "</td><td>";
+                str += t.taken.toString();
+                str += "</td>";
+                str += "</tr>";
+                });
+            str += "</table>";
+            return str;
+            };
         statusEval.reset();
         statusEval.prgLen = prg.length;
         while(statusEval.running){
             var instr = prg[pos.pc];
-            evalInstr(model,instr);
-            model.pos = updatePos(model.pos);
+            evalInstr(model,instr,labels);
+            updatePos(model.pos);
             if(model.pos.pc < 0){
-                statusEval.stop(instr,"pc < 0");
+                var msg = "pc < 0<br>"+jmpTrace();
+                statusEval.fail(instr,msg);
                 }
             if(model.pos.pc >= prg.length){
-                statusEval.stop(instr,"pc > prg.length");
+                var msg = "pc > prg.length<br>" + jmpTrace();
+                statusEval.fail(instr,msg);
                 }
             }
         if(statusEval.error){
-            alert("error:"+statusEval.msgError);
+            printfn(statusEval.msgError,"red");
             }
         else {
-            alert(statusEval.msgStatus);
+            printfn(statusEval.msgStatus,"green");
             }
         };
     return {

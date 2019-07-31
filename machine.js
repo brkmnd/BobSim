@@ -55,6 +55,17 @@ var Machine = function(){
             };
         return ret;
         }();
+    pub.stackFrame = function(){
+        var stack = new Stack();
+        var ret = {};
+        ret.push = function(frame){
+            stack.push(frame);
+            };
+        ret.pop = function(){
+            return stack.pop();
+            };
+        return ret;
+        }();
     pub.fail = function(){
         var ret = {};
         ret.segfault = null;
