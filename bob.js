@@ -1761,6 +1761,13 @@ var BobSim = function(machine){
         switch(instr.instr){
             case "swap":
                 var sig = [argsSigRegReg];
+                var f = function(t){
+                    var a = argRead(iarg(0));
+                    var b = argRead(iarg(1));
+                    argWrite(iarg(0),b);
+                    argWrite(iarg(1),a);
+                    };
+                execInstr(sig,f);
                 break;
             case "add":
                 var sig = argsSigArit;
@@ -1777,9 +1784,9 @@ var BobSim = function(machine){
             case "add1":
                 var sig = [argsSigReg];
                 var f = function(t){
-                    var a = argRead(instr.args[0]);
+                    var a = argRead(iarg(0));
                     var res = model.pos.dir === 0 ? a + 1 : a - 1; 
-                    argWrite(instr.args[0],res);
+                    argWrite(iarg(0),res);
                     };
                 execInstr(sig,f);
                 break;
@@ -1796,22 +1803,42 @@ var BobSim = function(machine){
             case "sub1":
                 var sig = [argsSigReg];
                 var f = function(t){
-                    var a = argRead(instr.args[0]);
+                    var a = argRead(iarg(0));
                     var res = model.pos.dir === 0 ? a - 1 : a + 1;
-                    argWrite(instr.args[0],res);
+                    argWrite(iarg(0),res);
                     };
                 execInstr(sig,f)
                 break;
             case "mul":
                 var sig = [argsSigRegRegReg];
+                var f = function(t){
+                    if(!statusEval.failOnArgsSame(instr,iarg(1),iarg(2))){
+                        var a = argRead(iarg(1));
+                        var b = argRead(iarg(2));
+                        var t = iarg(0).v;
+                        var res = a * b;
+                        model.regs.xor(t,res);
+                        }
+                    };
+                execInstr(sig,f);
                 break;
-            case "mul2":
+            case "mul2-not":
                 var sig = [argsSigReg];
                 break;
             case "div":
                 var sig = [argsSigRegRegReg];
+                var f = function(t){
+                    if(!statusEval.failOnArgsSame(instr,iarg(1),iarg(2))){
+                        var a = argRead(iarg(1));
+                        var b = argRead(iarg(2));
+                        var t = iarg(0).v;
+                        var res = parseInt(a / b);
+                        model.regs.xor(t,res);
+                        }
+                    };
+                execInstr(sig,f);
                 break;
-            case "div2":
+            case "div2-not":
                 var sig = [argsSigReg];
                 break;
             case "neg":
@@ -1826,11 +1853,12 @@ var BobSim = function(machine){
             case "mod":
                 var sig = [argsSigRegRegReg];
                 var f = function(t){
-                    if(!statusEval.failOnArgsSame(iarg(1),iarg(2))){
+                    if(!statusEval.failOnArgsSame(instr,iarg(1),iarg(2))){
                         var a = argRead(iarg(1));
                         var b = argRead(iarg(2));
+                        var t = iarg(0).v;
                         var res = a % b;
-                        argWrite(iarg(0),res);
+                        model.regs.xor(t,res);
                         }
                     };
                 execInstr(sig,f);
@@ -1900,8 +1928,8 @@ var BobSim = function(machine){
                 var sig = [argsSigId];
                 var f = function(t){
                     var off = calcOffset(instr.args[0]);
-                    statusEval.traces.addJmp(instr,true);
                     model.pos.br = calcBr(off);
+                    statusEval.traces.addJmp(instr,true);
                     };
                 execInstr(sig,f);
                 break;
@@ -1921,7 +1949,7 @@ var BobSim = function(machine){
             case "bnz":
                 var sig = argsSigBr1;
                 var f = function(t){
-                    var a = argRead(instr.args[0]);
+                    var a = argRead(iarg(0));
                     var p = a !== 0;
                     if(p){
                         var off = calcOffset(instr.args[1]);
@@ -2028,6 +2056,24 @@ var BobSim = function(machine){
                     };
                 execInstr(sig,f);
                 break;
+            case "rcall":
+                var sig = [argsSigIdApp];
+                var f = function(t){
+                    var appArgs = instr.args[1];
+                    var off = calcOffset(iarg(0));
+                    var br = 0 - calcBr(off);
+                    statusEval.traces.addJmp(instr,true);
+                    if(br !== 0){
+                        pushStackFrame(appArgs.v);
+                        }
+                    else {
+                        popStackFrame();
+                        }
+                    model.pos.revDir();
+                    model.pos.br = br;
+                    };
+                execInstr(sig,f);
+                break;
             case "swret":
                 // identical to SWBR
                 var sig = [argsSigReg];
@@ -2045,13 +2091,24 @@ var BobSim = function(machine){
                     };
                 execInstr(sig,f);
                 break;
+            case "nop":
+                var sig = [argsSigUnit];
+                var f = function(t){};
+                execInstr(sig,f);
+                break;
             default:
-                printfn("not yet instr: "+instr.instr,"green");
+                var msg = "not yet instr: "+instr.instr;
+                printfn(msg,"green");
                 break;
             }
         };
     var evalPrg = function(prg,labels){
-        var pos = {pc:0,br:0,dir:0};
+        var pos = {
+            pc:0,br:0,dir:0,
+            revDir:function(){
+                pos.dir = pos.dir === 1 ? 0 : 1;
+                }
+            };
         var model = {mem:machine.mem,regs:machine.regs,pos:pos};
         var jmpTrace = function(){
             var str = "<h2>Jump Traces</h2>";
