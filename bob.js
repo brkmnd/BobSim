@@ -1527,9 +1527,12 @@ var BobSim = function(machine){
     var argsSigIdApp = args2typeSig([dummyArgId,dummyArgAppArgs]);
     // List of sigs
     var argsSigArit = [argsSigRegReg,argsSigRegImm];
-    var argsSigBr1 = [argsSigRegId];
+    var argsSigBr1 = [
+        //argsSigMemId,
+        argsSigRegId
+        ];
     var argsSigBr2 = [
-        argsSigMemMemId,
+        //argsSigMemMemId,
         argsSigRegRegId
         ];
     var statusEval = {
@@ -1572,17 +1575,36 @@ var BobSim = function(machine){
         failSegfault:function(instr){
             statusEval.fail(instr,"segfault");
             },
+        failArgSig:function(instr,expType,sig){
+            statusEval.fail(instr,"type error");
+            },
+        failOnSegfault:function(instr){
+            if(machine.fail.segfault !== null){
+                statusEval.failSegfault(instr);
+                return true;
+                }
+            return false;
+            },
+        failOnArgsSame:function(instr,arg1,arg2){
+            if(arg1.v === arg2.v){
+                var m = "same register given as destination and source";
+                statusEval.fail(instr,m);
+                return true;
+                }
+            return false;
+            },
         stop:function(instr,msg){
+            var m = "execution stopped";
             var msg0 = function(){
                 if(instr !== null){
                     var res =
-                        msg + " at " +
+                        m + " at " +
                         instr.instr.toUpperCase() + " " +
                         printPos(instr.pos) +
                         ": ";
                     return res;
                     }
-                return msg + ": ";
+                return m + ": ";
                 }();
             statusEval.running = false;
             statusEval.msgStatus = msg0 + msg;
@@ -1668,10 +1690,9 @@ var BobSim = function(machine){
             };
         var popStackFrame = function(){ 
             var frame = machine.stackFrame.pop();
-            var ks = Object.keys(frame);
-            for(var i = 0; i < ks.length; i++){
-                var k = ks[i];
-                model.regs.write(k,frame[k]);
+            for(var i = 0; i < frame.length; i++){
+                var arg = frame[i];
+                model.regs.write(arg.name,arg.v);
                 }
             };
         var instrPop = function(){
@@ -1704,6 +1725,16 @@ var BobSim = function(machine){
             model.regs.write("spointer",newSp);
             return true;
             };
+        var instrSwbr = function(sig){
+            var f = function(t){
+                var newBr = argRead(instr.args[0]);
+                var oldBr = model.pos.br;
+                statusEval.traces.addJmp(instr,true);
+                model.pos.br = newBr;
+                argWrite(instr.args[0],oldBr);
+                };
+            execInstr(sig,f);
+            };
         var checkArgType = function(instr,sig){
             if(instr.givenSig === undefined){
                 instr.givenSig = args2typeSig(instr.args);
@@ -1721,9 +1752,11 @@ var BobSim = function(machine){
                 f(t);
                 return true;
                 }
-            alert(t)
             statusEval.failArgSig(instr,t,sig);
             return false;
+            };
+        var iarg = function(i){
+            return instr.args[i];
             };
         switch(instr.instr){
             case "swap":
@@ -1732,11 +1765,12 @@ var BobSim = function(machine){
             case "add":
                 var sig = argsSigArit;
                 var f = function(t){
-                    // check if args are same
-                    var a = argRead(instr.args[0]);
-                    var b = argRead(instr.args[1]);
-                    var res = model.pos.dir === 0 ? a + b : a - b;
-                    argWrite(instr.args[0],res);
+                    if(!statusEval.failOnArgsSame(instr,iarg(0),iarg(1))){
+                        var a = argRead(instr.args[0]);
+                        var b = argRead(instr.args[1]);
+                        var res = model.pos.dir === 0 ? a + b : a - b;
+                        argWrite(instr.args[0],res);
+                        }
                     };
                 execInstr(sig,f);
                 break;
@@ -1791,6 +1825,15 @@ var BobSim = function(machine){
                 break;
             case "mod":
                 var sig = [argsSigRegRegReg];
+                var f = function(t){
+                    if(!statusEval.failOnArgsSame(iarg(1),iarg(2))){
+                        var a = argRead(iarg(1));
+                        var b = argRead(iarg(2));
+                        var res = a % b;
+                        argWrite(iarg(0),res);
+                        }
+                    };
+                execInstr(sig,f);
                 break;
             case "xor":
                 var sig = [argsSigRegReg];
@@ -1798,7 +1841,7 @@ var BobSim = function(machine){
                     var a = argRead(instr.args[0]);
                     var b = argRead(instr.args[1]);
                     var res = a ^ b;
-                    argWrite(instr.args[0],res);
+                    argWrite(iarg(0),res);
                     };
                 execInstr(sig,f);
                 break;
@@ -1808,15 +1851,35 @@ var BobSim = function(machine){
                     var a = argRead(instr.args[0]);
                     var b = argRead(instr.args[1]);
                     var res = a ^ b;
-                    argWrite(instr.args[0],res);
+                    argWrite(iarg(0),res);
                     };
                 execInstr(sig,f);
                 break;
             case "and":
                 var sig = [argsSigRegRegReg];
+                var f = function(t){
+                    if(!statusEval.failOnArgsSame(instr,iarg(1),iarg(2))){
+                        var p = argRead(iarg(1));
+                        var q = argRead(iarg(2));
+                        var t = iarg(0).v;
+                        var res = p & q;
+                        model.regs.xor(t,res);
+                        }
+                    };
+                execInstr(sig,f);
                 break;
             case "or":
                 var sig = [argsSigRegRegReg];
+                var f = function(t){
+                    if(statusEval.failOnArgsSame(instr,iarg(1),iarg(2))){
+                        var p = argRead(iarg(1));
+                        var q = argRead(iarg(2));
+                        var t = iarg(0).v;
+                        var res = p | q;
+                        model.regs.xor(t,res);
+                        }
+                    };
+                execInstr(sig,f);
                 break;
             // Memory
             case "exch":
@@ -1825,10 +1888,7 @@ var BobSim = function(machine){
                     var a = argRead(instr.args[0]);
                     var bPtr = argRead(instr.args[1]);
                     var b = model.mem.read(bPtr);
-                    if(machine.fail.segfault !== null){
-                        statusEval.failSegfault(instr);
-                        }
-                    else {
+                    if(!statusEval.failOnSegfault(instr)){
                         argWrite(instr.args[0],b);
                         model.mem.write(bPtr,a);
                         }
@@ -1847,15 +1907,85 @@ var BobSim = function(machine){
                 break;
             case "bz":
                 var sig = argsSigBr1;
+                var f = function(t){
+                    var a = argRead(instr.args[0]);
+                    var p = a === 0;
+                    if(p){
+                        var off = calcOffset(instr.args[1]);
+                        model.pos.br = calcBr(off);
+                        }
+                    statusEval.traces.addJmp(instr,p);
+                    };
+                execInstr(sig,f);
                 break;
             case "bnz":
                 var sig = argsSigBr1;
+                var f = function(t){
+                    var a = argRead(instr.args[0]);
+                    var p = a !== 0;
+                    if(p){
+                        var off = calcOffset(instr.args[1]);
+                        model.pos.br = calcBr(off);
+                        }
+                    statusEval.traces.addJmp(instr,p);
+                    };
+                execInstr(sig,f);
                 break;
             case "beq":
                 var sig = argsSigBr2;
+                var f = function(t){
+                    var a = argRead(instr.args[0]);
+                    var b = argRead(instr.args[1]);
+                    var p = a === b;
+                    if(p){
+                        var off = calcOffset(instr.args[2]);
+                        model.pos.br = calcBr(off);
+                        }
+                    statusEval.traces.addJmp(instr,p);
+                    };
+                execInstr(sig,f);
                 break;
-            case "blt":
+            case "bneq":
                 var sig = argsSigBr2;
+                var f = function(t){
+                    var a = argRead(instr.args[0]);
+                    var b = argRead(instr.args[1]);
+                    var p = a !== b;
+                    if(p){
+                        var off = calcOffset(instr.args[2]);
+                        model.pos.br = calcBr(off);
+                        }
+                    statusEval.traces.addJmp(instr,p);
+                    };
+                execInstr(sig,f);
+                break;
+            case "bgt":
+                var sig = argsSigBr2;
+                var f = function(t){
+                    var a = argRead(instr.args[0]);
+                    var b = argRead(instr.args[1]);
+                    var p = a > b;
+                    if(p){
+                        var off = calcOffset(instr.args[2]);
+                        model.pos.br = calcBr(off);
+                        }
+                    statusEval.traces.addJmp(instr,p);
+                    };
+                execInstr(sig,f);
+                break;
+            case "bleq":
+                var sig = argsSigBr2;
+                var f = function(t){
+                    var a = argRead(instr.args[0]);
+                    var b = argRead(instr.args[1]);
+                    var p = a <= b;
+                    if(p){
+                        var off = calcOffset(instr.args[2]);
+                        model.pos.br = calcBr(off);
+                        }
+                    statusEval.traces.addJmp(instr,p);
+                    };
+                execInstr(sig,f);
                 break;
             case "push":
                 var sig = [argsSigReg];
@@ -1899,15 +2029,13 @@ var BobSim = function(machine){
                 execInstr(sig,f);
                 break;
             case "swret":
+                // identical to SWBR
                 var sig = [argsSigReg];
-                var f = function(t){
-                    var newBr = argRead(instr.args[0]);
-                    var oldBr = model.pos.br;
-                    statusEval.traces.addJmp(instr,true);
-                    model.pos.br = newBr;
-                    argWrite(instr.args[0],oldBr);
-                    };
-                execInstr(sig,f);
+                instrSwbr(sig);
+                break;
+            case "swbr":
+                var sig = [argsSigReg];
+                instrSwbr(sig);
                 break;
             case "stop":
                 var sig = [argsSigUnit];

@@ -72,6 +72,340 @@ f:
 f.bot:
     BRA         f.top
         </span>
+        <span class="bobprg">
+bob.prg.entry:
+    CALL        main ()
+    STOP
+main.top:
+    BRA         main.bot
+    POP         $raddr
+main:
+    SWRET       $raddr
+    NEG         $raddr
+    PUSH        $raddr
+    # main body
+    # main declarations
+    PUSH        $0
+    XOR         $x  $spointer
+    PUSH        $0
+    XOR         $y  $spointer
+    # x += 100
+    EXCH        $main.0  $x
+    XORI        $main.1  100
+    ADD         $main.0  $main.1
+    XORI        $main.1  100
+    EXCH        $main.0  $x
+    # /x += 100
+    # y += 150
+    EXCH        $main.2  $y
+    XORI        $main.3  150
+    ADD         $main.2  $main.3
+    XORI        $main.3  150
+    EXCH        $main.2  $y
+    # /y += 150
+    CALL        f  ($x,$y)
+    # main undeclarations
+    POP         $res.y
+    POP         $res.x
+main.bot:
+    BRA         main.top
+f.top:
+    BRA         f.bot
+    POP         $raddr
+f:
+    SWRET       $raddr
+    NEG         $raddr
+    PUSH        $raddr
+    # f body
+    # if[0]
+    # if[0]((&& (> x y) (> y (+ 10 20))))
+    # ampamp[0]
+    EXCH        $f.0  $arg0
+    XOR         $f.1  $f.0
+    EXCH        $f.0  $arg0
+    EXCH        $f.2  $arg1
+    XOR         $f.3  $f.2
+    EXCH        $f.2  $arg1
+    XOR         $f.4  $f.1
+f.gt0_top_pre:
+    BGT         $f.4  $f.3  f.gt0_true_pre
+f.gt0_false_pre:
+    BRA         f.gt0_bot_pre
+f.gt0_true_pre:
+    BRA         f.gt0_top_pre
+    XORI        $f.5  1
+f.gt0_bot_pre:
+    BLEQ        $f.4  $f.3  f.gt0_false_pre
+    # /f.gt0_pre
+    EXCH        $f.6  $arg1
+    XOR         $f.7  $f.6
+    EXCH        $f.6  $arg1
+    XORI        $f.8  10
+    XORI        $f.9  20
+    XOR         $f.10  $f.8
+    ADD         $f.10  $f.9
+    XOR         $f.11  $f.7
+f.gt1_top_pre:
+    BGT         $f.11  $f.10  f.gt1_true_pre
+f.gt1_false_pre:
+    BRA         f.gt1_bot_pre
+f.gt1_true_pre:
+    BRA         f.gt1_top_pre
+    XORI        $f.12  1
+f.gt1_bot_pre:
+    BLEQ        $f.11  $f.10  f.gt1_false_pre
+    # /f.gt1_pre
+    AND         $f.13  $f.5  $f.12
+f.if0_top:
+    BZ          $f.13  f.if0_else
+    AND         $f.13  $f.5  $f.12
+f.gt1_bot_post:
+    BLEQ        $f.11  $f.10  f.gt1_false_post
+    XORI        $f.12  1
+f.gt1_true_post:
+    BRA         f.gt1_top_post
+f.gt1_false_post:
+    BRA         f.gt1_bot_post
+f.gt1_top_post:
+    BGT         $f.11  $f.10  f.gt1_true_post
+    XOR         $f.11  $f.7
+    SUB         $f.10  $f.9
+    XOR         $f.10  $f.8
+    XORI        $f.9  20
+    XORI        $f.8  10
+    EXCH        $f.6  $arg1
+    XOR         $f.7  $f.6
+    EXCH        $f.6  $arg1
+f.gt0_bot_post:
+    BLEQ        $f.4  $f.3  f.gt0_false_post
+    XORI        $f.5  1
+f.gt0_true_post:
+    BRA         f.gt0_top_post
+f.gt0_false_post:
+    BRA         f.gt0_bot_post
+f.gt0_top_post:
+    BGT         $f.4  $f.3  f.gt0_true_post
+    XOR         $f.4  $f.1
+    EXCH        $f.2  $arg1
+    XOR         $f.3  $f.2
+    EXCH        $f.2  $arg1
+    EXCH        $f.0  $arg0
+    XOR         $f.1  $f.0
+    EXCH        $f.0  $arg0
+    # /ampamp[0]
+f.if0_if:
+    # y -= 4
+    EXCH        $f.29  $arg1
+    XORI        $f.30  4
+    SUB         $f.29  $f.30
+    XORI        $f.30  4
+    EXCH        $f.29  $arg1
+    # /y -= 4
+    # ampamp[6]
+    EXCH        $f.14  $arg0
+    XOR         $f.15  $f.14
+    EXCH        $f.14  $arg0
+    EXCH        $f.16  $arg1
+    XOR         $f.17  $f.16
+    EXCH        $f.16  $arg1
+    XOR         $f.18  $f.15
+    ADD         $f.18  $f.17
+    XORI        $f.19  246
+    XOR         $f.20  $f.18
+f.eq6_top_pre:
+    BEQ         $f.20  $f.19  f.eq6_true_pre
+f.eq6_false_pre:
+    BRA         f.eq6_bot_pre
+f.eq6_true_pre:
+    BRA         f.eq6_top_pre
+    XORI        $f.21  1
+f.eq6_bot_pre:
+    BNEQ        $f.20  $f.19  f.eq6_false_pre
+    # /f.eq6_pre
+    EXCH        $f.22  $arg1
+    XOR         $f.23  $f.22
+    EXCH        $f.22  $arg1
+    EXCH        $f.24  $arg0
+    XOR         $f.25  $f.24
+    EXCH        $f.24  $arg0
+    XOR         $f.26  $f.23
+f.gt7_top_pre:
+    BGT         $f.26  $f.25  f.gt7_true_pre
+f.gt7_false_pre:
+    BRA         f.gt7_bot_pre
+f.gt7_true_pre:
+    BRA         f.gt7_top_pre
+    XORI        $f.27  1
+f.gt7_bot_pre:
+    BLEQ        $f.26  $f.25  f.gt7_false_pre
+    # /f.gt7_pre
+    AND         $f.28  $f.21  $f.27
+f.if0_then:
+    BRA         f.if0_bot
+    # ampamp[2]
+    EXCH        $f.0  $arg0
+    XOR         $f.1  $f.0
+    EXCH        $f.0  $arg0
+    EXCH        $f.2  $arg1
+    XOR         $f.3  $f.2
+    EXCH        $f.2  $arg1
+    XOR         $f.4  $f.1
+f.gt2_top_pre:
+    BGT         $f.4  $f.3  f.gt2_true_pre
+f.gt2_false_pre:
+    BRA         f.gt2_bot_pre
+f.gt2_true_pre:
+    BRA         f.gt2_top_pre
+    XORI        $f.5  1
+f.gt2_bot_pre:
+    BLEQ        $f.4  $f.3  f.gt2_false_pre
+    # /f.gt2_pre
+    EXCH        $f.6  $arg1
+    XOR         $f.7  $f.6
+    EXCH        $f.6  $arg1
+    XORI        $f.8  10
+    XORI        $f.9  20
+    XOR         $f.10  $f.8
+    ADD         $f.10  $f.9
+    XOR         $f.11  $f.7
+f.gt3_top_pre:
+    BGT         $f.11  $f.10  f.gt3_true_pre
+f.gt3_false_pre:
+    BRA         f.gt3_bot_pre
+f.gt3_true_pre:
+    BRA         f.gt3_top_pre
+    XORI        $f.12  1
+f.gt3_bot_pre:
+    BLEQ        $f.11  $f.10  f.gt3_false_pre
+    # /f.gt3_pre
+    AND         $f.13  $f.5  $f.12
+f.if0_else:
+    BRA         f.if0_top
+    AND         $f.13  $f.5  $f.12
+f.gt3_bot_post:
+    BLEQ        $f.11  $f.10  f.gt3_false_post
+    XORI        $f.12  1
+f.gt3_true_post:
+    BRA         f.gt3_top_post
+f.gt3_false_post:
+    BRA         f.gt3_bot_post
+f.gt3_top_post:
+    BGT         $f.11  $f.10  f.gt3_true_post
+    XOR         $f.11  $f.7
+    SUB         $f.10  $f.9
+    XOR         $f.10  $f.8
+    XORI        $f.9  20
+    XORI        $f.8  10
+    EXCH        $f.6  $arg1
+    XOR         $f.7  $f.6
+    EXCH        $f.6  $arg1
+f.gt2_bot_post:
+    BLEQ        $f.4  $f.3  f.gt2_false_post
+    XORI        $f.5  1
+f.gt2_true_post:
+    BRA         f.gt2_top_post
+f.gt2_false_post:
+    BRA         f.gt2_bot_post
+f.gt2_top_post:
+    BGT         $f.4  $f.3  f.gt2_true_post
+    XOR         $f.4  $f.1
+    EXCH        $f.2  $arg1
+    XOR         $f.3  $f.2
+    EXCH        $f.2  $arg1
+    EXCH        $f.0  $arg0
+    XOR         $f.1  $f.0
+    EXCH        $f.0  $arg0
+    # /ampamp[2]
+    # y += 4
+    EXCH        $f.31  $arg1
+    XORI        $f.32  4
+    ADD         $f.31  $f.32
+    XORI        $f.32  4
+    EXCH        $f.31  $arg1
+    # /y += 4
+    # fi[0]((&& (= (+ x y) 246) (> y x)))
+    # ampamp[4]
+    EXCH        $f.14  $arg0
+    XOR         $f.15  $f.14
+    EXCH        $f.14  $arg0
+    EXCH        $f.16  $arg1
+    XOR         $f.17  $f.16
+    EXCH        $f.16  $arg1
+    XOR         $f.18  $f.15
+    ADD         $f.18  $f.17
+    XORI        $f.19  246
+    XOR         $f.20  $f.18
+f.eq4_top_pre:
+    BEQ         $f.20  $f.19  f.eq4_true_pre
+f.eq4_false_pre:
+    BRA         f.eq4_bot_pre
+f.eq4_true_pre:
+    BRA         f.eq4_top_pre
+    XORI        $f.21  1
+f.eq4_bot_pre:
+    BNEQ        $f.20  $f.19  f.eq4_false_pre
+    # /f.eq4_pre
+    EXCH        $f.22  $arg1
+    XOR         $f.23  $f.22
+    EXCH        $f.22  $arg1
+    EXCH        $f.24  $arg0
+    XOR         $f.25  $f.24
+    EXCH        $f.24  $arg0
+    XOR         $f.26  $f.23
+f.gt5_top_pre:
+    BGT         $f.26  $f.25  f.gt5_true_pre
+f.gt5_false_pre:
+    BRA         f.gt5_bot_pre
+f.gt5_true_pre:
+    BRA         f.gt5_top_pre
+    XORI        $f.27  1
+f.gt5_bot_pre:
+    BLEQ        $f.26  $f.25  f.gt5_false_pre
+    # /f.gt5_pre
+    AND         $f.28  $f.21  $f.27
+f.if0_bot:
+    BNZ         $f.28  f.if0_then
+    AND         $f.28  $f.21  $f.27
+f.gt5_bot_post:
+    BLEQ        $f.26  $f.25  f.gt5_false_post
+    XORI        $f.27  1
+f.gt5_true_post:
+    BRA         f.gt5_top_post
+f.gt5_false_post:
+    BRA         f.gt5_bot_post
+f.gt5_top_post:
+    BGT         $f.26  $f.25  f.gt5_true_post
+    XOR         $f.26  $f.23
+    EXCH        $f.24  $arg0
+    XOR         $f.25  $f.24
+    EXCH        $f.24  $arg0
+    EXCH        $f.22  $arg1
+    XOR         $f.23  $f.22
+    EXCH        $f.22  $arg1
+f.eq4_bot_post:
+    BNEQ        $f.20  $f.19  f.eq4_false_post
+    XORI        $f.21  1
+f.eq4_true_post:
+    BRA         f.eq4_top_post
+f.eq4_false_post:
+    BRA         f.eq4_bot_post
+f.eq4_top_post:
+    BEQ         $f.20  $f.19  f.eq4_true_post
+    XOR         $f.20  $f.18
+    XORI        $f.19  246
+    SUB         $f.18  $f.17
+    XOR         $f.18  $f.15
+    EXCH        $f.16  $arg1
+    XOR         $f.17  $f.16
+    EXCH        $f.16  $arg1
+    EXCH        $f.14  $arg0
+    XOR         $f.15  $f.14
+    EXCH        $f.14  $arg0
+    # /ampamp[4]
+    # /if[0]
+f.bot:
+    BRA         f.top
+        </span>
         <p id="ud1"></p>
         <p id="ud2"></p>
         <p id="ud3"></p>
@@ -115,8 +449,9 @@ var printPrg = function(prg){
 var prgs = document.getElementsByClassName("bobprg");
 var machine = new Machine();
 var bob = new BobSim(machine);
-printPrg(prgs[0].innerHTML);
-bob.exec(prgs[0].innerHTML);
+var prg = prgs[1].innerHTML;
+printPrg(prg);
+bob.exec(prg);
         </script>
     </body>
 </html>
