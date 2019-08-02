@@ -14,6 +14,9 @@ var Machine = function(){
             regs[r] = v;
             };
         ret.xor = function(r,v){
+            if(regs[r] === undefined){
+                regs[r] = 0;
+                }
             regs[r] ^= v;
             };
         ret.foreach = function(f){

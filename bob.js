@@ -1785,7 +1785,7 @@ var BobSim = function(machine){
                 var sig = [argsSigReg];
                 var f = function(t){
                     var a = argRead(iarg(0));
-                    var res = model.pos.dir === 0 ? a + 1 : a - 1; 
+                    var res = model.pos.isDirFwd() ? a + 1 : a - 1; 
                     argWrite(iarg(0),res);
                     };
                 execInstr(sig,f);
@@ -1795,8 +1795,8 @@ var BobSim = function(machine){
                 var f = function(t){
                     var a = argRead(instr.args[0]);
                     var b = argRead(instr.args[1]);
-                    var res = model.pos.dir === 0 ? a - b : a + b;
-                    argWrite(instr.args[0],res);
+                    var res = model.pos.isDirFwd() ? a - b : a + b;
+                    argWrite(iarg(0),res);
                     };
                 execInstr(sig,f);
                 break;
@@ -1846,7 +1846,7 @@ var BobSim = function(machine){
                 var f = function(t){
                     var a = argRead(instr.args[0]);
                     var res = 0 - a;
-                    argWrite(instr.args[0],res);
+                    argWrite(iarg(0),res);
                     };
                 execInstr(sig,f);
                 break;
@@ -2059,7 +2059,7 @@ var BobSim = function(machine){
             case "rcall":
                 var sig = [argsSigIdApp];
                 var f = function(t){
-                    var appArgs = instr.args[1];
+                    var appArgs = iarg(1);
                     var off = calcOffset(iarg(0));
                     var br = 0 - calcBr(off);
                     statusEval.traces.addJmp(instr,true);
@@ -2107,6 +2107,9 @@ var BobSim = function(machine){
             pc:0,br:0,dir:0,
             revDir:function(){
                 pos.dir = pos.dir === 1 ? 0 : 1;
+                },
+            isDirFwd:function(){
+                return pos.dir === 0;
                 }
             };
         var model = {mem:machine.mem,regs:machine.regs,pos:pos};
