@@ -2,7 +2,7 @@ var Machine = function(){
     var pub = {};
     var memSize = 2000;
     pub.regs = function(){
-        var regs = {"spointer":memSize};
+        var regs = {"spointer":0};
         var ret = {};
         ret.read = function(r){
             if(regs[r] === undefined){
@@ -44,6 +44,17 @@ var Machine = function(){
         ret.write = function(i,v){
             if(i >= 0 && i < memSize){
                 mem[i] = v;
+                return 0;
+                }
+            pub.fail.segfault = "segfault";
+            return 1;
+            };
+        ret.xor = function(i,v){
+            if(i >= 0 && i < memSize){
+                if(mem[i] === undefined){
+                    mem[i] = 0;
+                    }
+                mem[i] ^= v;
                 return 0;
                 }
             pub.fail.segfault = "segfault";
