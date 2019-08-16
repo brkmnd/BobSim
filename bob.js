@@ -101,6 +101,10 @@ var BobSim = function(machine){
             },
         //[8] Args -> lbracket ArgM rbracket Args 
         8:function(tree,absyn,labels){
+            var args = tree.pop();
+            var expr = tree.pop();
+            args.v.push({type:"mem-ref",v:expr});
+            tree.push(args);
             return tree;
             },
         //[9] Args -> id Args 
@@ -135,11 +139,26 @@ var BobSim = function(machine){
         //[13] ArgM -> ArgMLit 
         13:function(tree,absyn,labels){ return tree; },
         //[14] ArgM -> ArgM times ArgM 
-        14:function(tree,absyn,labels){ return tree; },
+        14:function(tree,absyn,labels){
+            var argR = tree.pop();
+            var argL = tree.pop();
+            tree.push({type:"mem-expr",op:"*",l:argL,r:argR});
+            return tree;
+            },
         //[15] ArgM -> ArgM minus ArgM 
-        15:function(tree,absyn,labels){ return tree; },
+        15:function(tree,absyn,labels){
+            var argR = tree.pop();
+            var argL = tree.pop();
+            tree.push({type:"mem-expr",op:"-",l:argL,r:argR});
+            return tree;
+            },
         //[16] ArgM -> ArgM plus ArgM 
-        16:function(tree,absyn,labels){ return tree; },
+        16:function(tree,absyn,labels){
+            var argR = tree.pop();
+            var argL = tree.pop();
+            tree.push({type:"mem-expr",op:"+",l:argL,r:argR});
+            return tree;
+            },
         //[17] ArgMLit -> imm 
         17:function(tree,absyn,labels){ return tree; },
         //[18] ArgMLit -> reg 
@@ -202,9 +221,9 @@ var BobSim = function(machine){
         };
     var lexer = function(inStr){
         var rxStr =
-            "\\$([^ \\(\\)\\n:,]+)|"+
+            "\\$([^ \\(\\)\\n:,\\[\\]]+)|"+
             "([0-9]+)|"+
-            "([a-zA-Z<>_@][^ \\(\\)\\n:]*)|"+
+            "([a-zA-Z<>_@][^ \\(\\)\\n:\\[\\]]*)|"+
             "(\\+)|"+
             "(\\-)|"+
             "(\\*)|"+
@@ -1377,108 +1396,17 @@ var BobSim = function(machine){
             }
         };
     /* End of Parser
-     * 
+     * End of Parser
+     * End of Parser
+     * End of Parser
      * */
-    var printPos = function(pos){
-        if(pos !== null){
-            return "(" + pos.y.toString() + "," + pos.x.toString() + ")";
-            }
-        return "(-1,-1)";
-        };
-    var updatePos = function(pos){
-        if(pos.dir === 0){
-            if(pos.br === 0){
-                pos.pc += 1;
-                return pos;
-                }
-            pos.pc += pos.br;
-            return pos;
-            }
-        if(pos.br === 0){
-            pos.pc -= 1;
-            return pos;
-            }
-        pos.pc -= pos.br;
-        return pos;
-        };
-    var dummyArgImm = {type:"imm"};
-    var dummyArgReg = {type:"reg"};
-    var dummyArgId = {type:"id"};
-    var dummyArgAppArgs = {type:"app-args"};
-    var typeSig2name = function(ti){
-        switch(ti){
-            case "0": return "imm";
-            case "1": return "reg";
-            case "2": return "id";
-            case "3": return "arg-list";
-            default: return "null";
-            }
-        };
-    var arg2typeSig = function(arg){
-        switch(arg.type){
-            case "imm": return "0";
-            case "reg": return "1";
-            case "id":  return "2";
-            case "app-args": return "3";
-            default:
-                alert("missing arg2typeSig: " + arg.type);
-                return "4";
-            } 
-        };
-    var args2typeSig = function(args){
-        var retval = "";
-        for(var i = 0; i < args.length; i++){
-            retval += arg2typeSig(args[i]);
-            }
-        return retval;
-        };
-    var typeSig2names = function(sig){
-        var res = "";
-        for(var i = 0; i < sig.length; i++){
-            res += typeSig2name(sig[i]);
-            res += " ";
-            }
-        if(res.length === 0){
-            return "unit";
-            }
-        return res;
-        };
-    var argsSigUnit = args2typeSig([]);
-    var argsSigReg = args2typeSig([dummyArgReg]);
-    var argsSigRegReg = args2typeSig([dummyArgReg,dummyArgReg]);
-    var argsSigRegId = args2typeSig([dummyArgReg,dummyArgId]);
-    var argsSigRegRegReg = args2typeSig([
-        dummyArgReg,
-        dummyArgReg,
-        dummyArgReg
-    ]);
-    var argsSigRegImm = args2typeSig([dummyArgReg,dummyArgImm]);
-    var argsSigRegRegId = args2typeSig([
-        dummyArgReg,
-        dummyArgReg,
-        dummyArgId
-        ]);
-    var argsSigId = args2typeSig([dummyArgId]);
-    var argsSigMemId = args2typeSig(
-        // need to be included in absyn
-        []
-        );
-    var argsSigMemMemId = args2typeSig([
-        //dummyArgMem,
-        //dummyArgMem,
-        dummyArgId
-        ]);
-    var argsSigIdApp = args2typeSig([dummyArgId,dummyArgAppArgs]);
-    // List of sigs
-    var argsSigArit = [argsSigRegReg,argsSigRegImm];
-    var argsSigBr1 = [
-        //argsSigMemId,
-        argsSigRegId
-        ];
-    var argsSigBr2 = [
-        //argsSigMemMemId,
-        argsSigRegRegId
-        ];
+
+    /* Status contains
+     *  - variables to tell if execution is running
+     *  - error messages
+     *  - stats containing count of number of instruction executed etc.
+     *  - traces to be used for keeping track of jumps etc.
+     * */
     var statusEval = {
         prgLen:0,
         errorType:null,
@@ -1486,6 +1414,23 @@ var BobSim = function(machine){
         error:false,
         msgError:null,
         msgStatus:null,
+        stats:{
+            instrExecs:0,
+            instrCount:0,
+            branchTaken:0,
+            branchVisited:0
+            },
+        incStats:{
+            instrExec:function(){   
+                statusEval.stats.instrExecs++;
+                },
+            branch:function(taken){
+                if(taken){
+                    statusEval.stats.branchTaken++;
+                    }
+                statusEval.stats.branchVisited++;
+                }
+            },
         warnings:[],
         traces:function(){
             var jmps = [];
@@ -1524,12 +1469,24 @@ var BobSim = function(machine){
         failSegfault:function(instr){
             statusEval.fail(instr,"segfault");
             },
-        failArgSig:function(instr,sig){
+        failArgSig:function(instr,sig /* type is array */){
             var givenSig = args2typeSig(instr.args);
             var msg = "given type sig "
+            var expctSig = function(){
+                var res = "";
+                for(var i = 0; i < sig.length; i++){
+                    var s = sig[i];
+                    res += "(" + typeSig2names(s) + ")";
+                    res += ",";
+                    }
+                if(res.length === 0){
+                    return "( unit )";
+                    }
+                return res.substr(0,res.length - 1);
+                }();
             msg += "( " + typeSig2names(givenSig) + ")";
             msg += " but expected ";
-            msg += "( " + typeSig2names(sig) + ")";
+            msg += expctSig;
             statusEval.fail(instr,msg);
             },
         failPc:function(instr,msg){
@@ -1584,98 +1541,245 @@ var BobSim = function(machine){
             statusEval.traceJumps = [];
             }
         };
-    var evalInstr = function(model,instr,labels){
-        var argRead = function(arg){
-            switch(arg.type){
-                case "reg":
-                    var v = model.regs.read(arg.v);
-                    return v;
-                //case "mem": return 0;
-                case "imm":
-                    return arg.v;
-                default:
-                    alert("unset arg type "+arg.type);
+
+    /* Functions and variables to handle type checking.
+     * */
+    var dummyArgImm = {type:"imm"};
+    var dummyArgReg = {type:"reg"};
+    var dummyArgId = {type:"id"};
+    var dummyArgAppArgs = {type:"app-args"};
+    var dummyArgMem = {type:"mem-ref"};
+    var typeSig2name = function(ti){
+        switch(ti){
+            case "0": return "imm";
+            case "1": return "reg";
+            case "2": return "id";
+            case "3": return "arg-list";
+            case "4": return "mem-ref";
+            default:
+                return "null";
+            }
+        };
+    var arg2typeSig = function(arg){
+        switch(arg.type){
+            case "imm": return "0";
+            case "reg": return "1";
+            case "id":  return "2";
+            case "app-args": return "3";
+            case "mem-ref": return "4";
+            default:
+                alert("missing arg2typeSig: " + arg.type);
+                return "4";
+            } 
+        };
+    var args2typeSig = function(args){
+        var retval = "";
+        for(var i = 0; i < args.length; i++){
+            retval += arg2typeSig(args[i]);
+            }
+        return retval;
+        };
+    var typeSig2names = function(sig){
+        var res = "";
+        for(var i = 0; i < sig.length; i++){
+            res += typeSig2name(sig[i]);
+            res += " ";
+            }
+        if(res.length === 0){
+            return "unit";
+            }
+        return res;
+        };
+    var argsSigUnit = args2typeSig([]);
+    var argsSigReg = args2typeSig([dummyArgReg]);
+    var argsSigRegReg = args2typeSig([dummyArgReg,dummyArgReg]);
+    var argsSigRegId = args2typeSig([dummyArgReg,dummyArgId]);
+    var argsSigRegRegReg = args2typeSig([
+        dummyArgReg,
+        dummyArgReg,
+        dummyArgReg
+    ]);
+    var argsSigRegImm = args2typeSig([dummyArgReg,dummyArgImm]);
+    var argsSigRegRegId = args2typeSig([
+        dummyArgReg,
+        dummyArgReg,
+        dummyArgId
+        ]);
+    var argsSigId = args2typeSig([dummyArgId]);
+    var argsSigMemId = args2typeSig([
+        dummyArgMem,
+        dummyArgId
+        ]);
+    var argsSigMemMemId = args2typeSig([
+        dummyArgMem,
+        dummyArgMem,
+        dummyArgId
+        ]);
+    var argsSigIdApp = args2typeSig([dummyArgId,dummyArgAppArgs]);
+    // List of sigs
+    var argsSigArit = [argsSigRegReg,argsSigRegImm];
+    var argsSigBr1 = [
+        argsSigMemId,
+        argsSigRegId
+        ];
+    var argsSigBr2 = [
+        argsSigMemMemId,
+        argsSigRegRegId
+        ];
+    /* Position Manipulation 
+     * Here the whole position = (pc,dir,br) is handled
+     * */
+    var printPos = function(pos){
+        if(pos !== null){
+            return "(" + pos.y.toString() + "," + pos.x.toString() + ")";
+            }
+        return "(-1,-1)";
+        };
+    var updatePos = function(pos){
+        if(pos.dir === 0){
+            if(pos.br === 0){
+                pos.pc += 1;
+                return pos;
                 }
-            };
-        var argWrite = function(arg,v){
-            switch(arg.type){
-                case "reg":
-                    model.regs.write(arg.v,v);
-                    return true;
-                case "mem":
-                    model.mem.write(arg.v,v);
-                    return true;
-                default:
-                    return false;
-                }
-            };
-        var calcOffset = function(arg){
-            var pc = model.pos.pc;
-            var i = 0;
-            switch(arg.type){
-                case "id":
-                    var l = arg.v;
-                    i = labels[l];
-                    if(i === undefined){
-                        var msg = "label '"+l+"' not defined";
-                        statusEval.fail(instr,msg);
-                        return 0;
-                        }
-                    break;
-                default:
-                    alert("not yet in calcOffset");
-                    break;
-                }
-            return i - pc;
-            };
-        var calcBr = function(off){
-            if(model.pos.dir === 0){
-                return model.pos.br + off;
-                }
-            return model.pos.br - off;
-            };
-        var pushStackFrame = function(args){
-            var frame = [];
-            for(var i = 0; i < 4; i++){
-                var argName = "arg" + i.toString();
-                var argOldVal = model.regs.read(argName);
-                var argV = function(){
-                    if(args[i] === undefined){
-                        return 0;
-                        }
-                    return model.regs.read(args[i].v);
-                    }();
-                frame.push({name:argName,v:argOldVal});
-                model.regs.write(argName,argV);
-                }
-            machine.stackFrame.push(frame);
-            };
-        var popStackFrame = function(){ 
-            var frame = machine.stackFrame.pop();
-            for(var i = 0; i < frame.length; i++){
-                var arg = frame[i];
-                model.regs.write(arg.name,arg.v);
-                }
-            };
-        var checkArgType = function(instr,sig){
-            if(instr.givenSig === undefined){
-                instr.givenSig = args2typeSig(instr.args);
-                }
-            var i = sig.indexOf(instr.givenSig);
-            if(i > -1){
-                return sig[i];
-                }
-            return null;
-            //return sig.indexOf(instr.givenSig) > -1;
-            };
-        var execInstr = function(sig,f){
-            var t = checkArgType(instr,sig);
-            if(t !== null){
-                f(t);
+            pos.pc += pos.br;
+            return pos;
+            }
+        if(pos.br === 0){
+            pos.pc -= 1;
+            return pos;
+            }
+        pos.pc -= pos.br;
+        return pos;
+        };
+    var calcOffset = function(arg,pos,labels){
+        var pc = pos.pc;
+        var i = 0;
+        switch(arg.type){
+            case "id":
+                var l = arg.v;
+                i = labels[l];
+                if(i === undefined){
+                    var msg = "label '"+l+"' not defined";
+                    statusEval.fail(instr,msg);
+                    return 0;
+                    }
+                break;
+            default:
+                alert("not yet in calcOffset");
+                break;
+            }
+        return i - pc;
+        };
+    var calcMemExpr = function(l,r,op){
+        switch(op){
+            case "+":
+                return l + r;
+            case "-":
+                return l - r;
+            default:
+                return l * r;
+            }
+        };
+    var calcBr = function(off,pos){
+        if(pos.dir === 0){
+            return pos.br + off;
+            }
+        return pos.br - off;
+        };
+    /* Misc functions for evaluation
+     * */
+    var argRead = function(arg){
+        switch(arg.type){
+            case "reg":
+                var v = machine.regs.read(arg.v);
+                return v;
+            case "imm":
+                return arg.v;
+            case "mem-ref":
+                var ptr = argRead(arg.v);
+                var v = machine.mem.read(ptr);
+                return v;
+            case "mem-expr":
+                var l = argRead(arg.l);
+                var r = argRead(arg.r);
+                var v = calcMemExpr(l,r,arg.op);
+                return v;
+            default:
+                alert("unset arg type "+arg.type);
+            }
+        };
+    var argWrite = function(arg,v){
+        switch(arg.type){
+            case "reg":
+                machine.regs.write(arg.v,v);
                 return true;
-                }
-            statusEval.failArgSig(instr,sig);
-            return false;
+            case "mem":
+                // In bob one can't write direclty to memory
+                return false;
+            default:
+                return false;
+            }
+        };
+    var pushStackFrame = function(args){
+        var frame = [];
+        for(var i = 0; i < 4; i++){
+            var argName = "arg" + i.toString();
+            var argOldVal = machine.regs.read(argName);
+            var argV = function(){
+                if(args[i] === undefined){
+                    return 0;
+                    }
+                return machine.regs.read(args[i].v);
+                }();
+            frame.push({name:argName,v:argOldVal});
+            machine.regs.write(argName,argV);
+            }
+        machine.stackFrame.push(frame);
+        };
+    var popStackFrame = function(){ 
+        var frame = machine.stackFrame.pop();
+        for(var i = 0; i < frame.length; i++){
+            var arg = frame[i];
+            machine.regs.write(arg.name,arg.v);
+            }
+        };
+    var checkArgType = function(instr,sig){
+        if(instr.givenSig === undefined){
+            instr.givenSig = args2typeSig(instr.args);
+            }
+        var i = sig.indexOf(instr.givenSig);
+        if(i > -1){
+            return sig[i];
+            }
+        return null;
+        };
+    var execInstr = function(instr,sig,f){
+        var t = checkArgType(instr,sig);
+        if(t !== null){
+            f(t);
+            return true;
+            }
+        statusEval.failArgSig(instr,sig);
+        return false;
+        };
+    /* Evaluation of an instruction is done in this function
+     * The parameter model contains a pointer to the machine
+     *  within evalInstr use model to access regs and mem
+     *  in the above access through machine
+     * */
+    var evalInstr = function(model,instr,labels){
+        var trackBranch = function(taken){
+            // add tracking info on branch instruction
+            statusEval.traces.addJmp(instr,model,taken);
+            statusEval.incStats.branch(taken);
+            };
+        var trackInstr = function(){
+            // add tracking info on instruction.
+            // Do that for all instructions
+            statusEval.incStats.instrExec();
+            }();
+        var iarg = function(i){
+            return instr.args[i];
             };
         var instrPop = function(){
             var sp = model.regs.read("spointer");
@@ -1711,16 +1815,17 @@ var BobSim = function(machine){
             var f = function(t){
                 var newBr = argRead(instr.args[0]);
                 var oldBr = model.pos.br;
-                statusEval.traces.addJmp(instr,model,true);
                 model.pos.br = newBr;
                 argWrite(instr.args[0],oldBr);
+                trackBranch(true);
                 };
-            execInstr(sig,f);
+            execInstr(instr,sig,f);
             };
-        var iarg = function(i){
-            return instr.args[i];
-            };
+        // Increment on executed instructions
         switch(instr.instr){
+            // Match on given instrucion
+            // New instructions are to be added here
+            // And should follow the given layout
             case "swap":
                 var sig = [argsSigRegReg];
                 var f = function(t){
@@ -1729,7 +1834,7 @@ var BobSim = function(machine){
                     argWrite(iarg(0),b);
                     argWrite(iarg(1),a);
                     };
-                execInstr(sig,f);
+                execInstr(instr,sig,f);
                 break;
             case "add":
                 var sig = argsSigArit;
@@ -1741,7 +1846,7 @@ var BobSim = function(machine){
                         argWrite(instr.args[0],res);
                         }
                     };
-                execInstr(sig,f);
+                execInstr(instr,sig,f);
                 break;
             case "add1":
                 var sig = [argsSigReg];
@@ -1750,7 +1855,7 @@ var BobSim = function(machine){
                     var res = model.pos.isDirFwd() ? a + 1 : a - 1; 
                     argWrite(iarg(0),res);
                     };
-                execInstr(sig,f);
+                execInstr(instr,sig,f);
                 break;
             case "sub":
                 var sig = argsSigArit;
@@ -1760,7 +1865,7 @@ var BobSim = function(machine){
                     var res = model.pos.isDirFwd() ? a - b : a + b;
                     argWrite(iarg(0),res);
                     };
-                execInstr(sig,f);
+                execInstr(instr,sig,f);
                 break;
             case "sub1":
                 var sig = [argsSigReg];
@@ -1769,7 +1874,7 @@ var BobSim = function(machine){
                     var res = model.pos.dir === 0 ? a - 1 : a + 1;
                     argWrite(iarg(0),res);
                     };
-                execInstr(sig,f)
+                execInstr(instr,sig,f)
                 break;
             case "mul":
                 var sig = [argsSigRegRegReg];
@@ -1782,10 +1887,16 @@ var BobSim = function(machine){
                         model.regs.xor(t,res);
                         }
                     };
-                execInstr(sig,f);
+                execInstr(instr,sig,f);
                 break;
-            case "mul2-not":
+            case "mul2":
                 var sig = [argsSigReg];
+                var f = function(t){
+                    var a = argRead(iarg(0));
+                    var res = a * 2;
+                    argWrite(iarg(0),res);
+                    };
+                execInstr(instr,sig,f);
                 break;
             case "div":
                 var sig = [argsSigRegRegReg];
@@ -1798,10 +1909,16 @@ var BobSim = function(machine){
                         model.regs.xor(t,res);
                         }
                     };
-                execInstr(sig,f);
+                execInstr(instr,sig,f);
                 break;
             case "div2-not":
                 var sig = [argsSigReg];
+                var f = function(){
+                    var a = argRead(iarg(0));
+                    var res = parseInt(a / 2);
+                    argWrite(iarg(0),res);
+                    };
+                execInstr(instr,sig,f);
                 break;
             case "neg":
                 var sig = [argsSigReg];
@@ -1810,7 +1927,7 @@ var BobSim = function(machine){
                     var res = 0 - a;
                     argWrite(iarg(0),res);
                     };
-                execInstr(sig,f);
+                execInstr(instr,sig,f);
                 break;
             case "mod":
                 var sig = [argsSigRegRegReg];
@@ -1823,7 +1940,7 @@ var BobSim = function(machine){
                         model.regs.xor(t,res);
                         }
                     };
-                execInstr(sig,f);
+                execInstr(instr,sig,f);
                 break;
             case "xor":
                 var sig = [argsSigRegReg];
@@ -1833,7 +1950,7 @@ var BobSim = function(machine){
                     var res = a ^ b;
                     argWrite(iarg(0),res);
                     };
-                execInstr(sig,f);
+                execInstr(instr,sig,f);
                 break;
             case "xori":
                 var sig = [argsSigRegImm];
@@ -1843,7 +1960,7 @@ var BobSim = function(machine){
                     var res = a ^ b;
                     argWrite(iarg(0),res);
                     };
-                execInstr(sig,f);
+                execInstr(instr,sig,f);
                 break;
             case "and":
                 var sig = [argsSigRegRegReg];
@@ -1856,7 +1973,7 @@ var BobSim = function(machine){
                         model.regs.xor(t,res);
                         }
                     };
-                execInstr(sig,f);
+                execInstr(instr,sig,f);
                 break;
             case "or":
                 var sig = [argsSigRegRegReg];
@@ -1869,7 +1986,7 @@ var BobSim = function(machine){
                         model.regs.xor(t,res);
                         }
                     };
-                execInstr(sig,f);
+                execInstr(instr,sig,f);
                 break;
             // Memory
             case "exch":
@@ -1883,17 +2000,17 @@ var BobSim = function(machine){
                         model.mem.write(bPtr,a);
                         }
                     };
-                execInstr(sig,f);
+                execInstr(instr,sig,f);
                 break;
             // Branch
             case "bra":
                 var sig = [argsSigId];
                 var f = function(t){
-                    var off = calcOffset(instr.args[0]);
-                    model.pos.br = calcBr(off);
-                    statusEval.traces.addJmp(instr,model,true);
+                    var off = calcOffset(iarg(0),model.pos,labels);
+                    model.pos.br = calcBr(off,model.pos);
+                    trackBranch(true);
                     };
-                execInstr(sig,f);
+                execInstr(instr,sig,f);
                 break;
             case "bz":
                 var sig = argsSigBr1;
@@ -1901,12 +2018,12 @@ var BobSim = function(machine){
                     var a = argRead(iarg(0));
                     var p = a === 0;
                     if(p){
-                        var off = calcOffset(iarg(1));
-                        model.pos.br = calcBr(off);
+                        var off = calcOffset(iarg(1),model.pos,labels);
+                        model.pos.br = calcBr(off,model.pos);
                         }
-                    statusEval.traces.addJmp(instr,model,p);
+                    trackBranch(p);
                     };
-                execInstr(sig,f);
+                execInstr(instr,sig,f);
                 break;
             case "bnz":
                 var sig = argsSigBr1;
@@ -1914,12 +2031,12 @@ var BobSim = function(machine){
                     var a = argRead(iarg(0));
                     var p = a !== 0;
                     if(p){
-                        var off = calcOffset(iarg(1));
-                        model.pos.br = calcBr(off);
+                        var off = calcOffset(iarg(1),model.pos,labels);
+                        model.pos.br = calcBr(off,model.pos);
                         }
-                    statusEval.traces.addJmp(instr,model,p);
+                    trackBranch(p);
                     };
-                execInstr(sig,f);
+                execInstr(instr,sig,f);
                 break;
             case "beq":
                 var sig = argsSigBr2;
@@ -1928,12 +2045,12 @@ var BobSim = function(machine){
                     var b = argRead(instr.args[1]);
                     var p = a === b;
                     if(p){
-                        var off = calcOffset(instr.args[2]);
-                        model.pos.br = calcBr(off);
+                        var off = calcOffset(iarg(2),model.pos,labels);
+                        model.pos.br = calcBr(off,model.pos);
                         }
-                    statusEval.traces.addJmp(instr,model,p);
+                    trackBranch(p);
                     };
-                execInstr(sig,f);
+                execInstr(instr,sig,f);
                 break;
             case "bneq":
                 var sig = argsSigBr2;
@@ -1942,12 +2059,12 @@ var BobSim = function(machine){
                     var b = argRead(instr.args[1]);
                     var p = a !== b;
                     if(p){
-                        var off = calcOffset(iarg(2));
-                        model.pos.br = calcBr(off);
+                        var off = calcOffset(iarg(2),model.pos,labels);
+                        model.pos.br = calcBr(off,model.pos);
                         }
-                    statusEval.traces.addJmp(instr,model,p);
+                    trackBranch(p);
                     };
-                execInstr(sig,f);
+                execInstr(instr,sig,f);
                 break;
             case "bgt":
                 var sig = argsSigBr2;
@@ -1956,12 +2073,12 @@ var BobSim = function(machine){
                     var b = argRead(instr.args[1]);
                     var p = a > b;
                     if(p){
-                        var off = calcOffset(instr.args[2]);
-                        model.pos.br = calcBr(off);
+                        var off = calcOffset(iarg(2),model.pos,labels);
+                        model.pos.br = calcBr(off,model.pos);
                         }
-                    statusEval.traces.addJmp(instr,model,p);
+                    trackBranch(p);
                     };
-                execInstr(sig,f);
+                execInstr(instr,sig,f);
                 break;
             case "bgeq":
                 var sig = argsSigBr2;
@@ -1970,12 +2087,12 @@ var BobSim = function(machine){
                     var b = argRead(iarg(1));
                     var p = a >= b;
                     if(p){
-                        var off = calcOffset(iarg(2));
-                        model.pos.br = calcBr(off);
+                        var off = calcOffset(iarg(2),model.pos,labels);
+                        model.pos.br = calcBr(off,model.pos);
                         }
-                    statusEval.traces.addJmp(instr,model,p);
+                    trackBranch(p);
                     };
-                execInstr(sig,f);
+                execInstr(instr,sig,f);
                 break;
             case "blt":
                 var sig = argsSigBr2;
@@ -1984,12 +2101,12 @@ var BobSim = function(machine){
                     var b = argRead(iarg(1));
                     var p = a < b;
                     if(p){
-                        var off = calcOffset(iarg(2));
-                        model.pos.br = calcBr(off);
+                        var off = calcOffset(iarg(2),model.pos,labels);
+                        model.pos.br = calcBr(off,model.pos);
                         }
-                    statusEval.traces.addJmp(instr,model,p);
+                    trackBranch(p);
                     };
-                execInstr(sig,f);
+                execInstr(instr,sig,f);
                 break;
             case "bleq":
                 var sig = argsSigBr2;
@@ -1998,12 +2115,12 @@ var BobSim = function(machine){
                     var b = argRead(instr.args[1]);
                     var p = a <= b;
                     if(p){
-                        var off = calcOffset(instr.args[2]);
-                        model.pos.br = calcBr(off);
+                        var off = calcOffset(iarg(2),model.pos,labels);
+                        model.pos.br = calcBr(off,model.pos);
                         }
-                    statusEval.traces.addJmp(instr,model,p);
+                    trackBranch(p);
                     };
-                execInstr(sig,f);
+                execInstr(instr,sig,f);
                 break;
             case "push":
                 var sig = [argsSigReg];
@@ -2015,7 +2132,7 @@ var BobSim = function(machine){
                         instrPop();
                         }
                     };
-                execInstr(sig,f);
+                execInstr(instr,sig,f);
                 break;
             case "pop":
                 var sig = [argsSigReg];
@@ -2027,14 +2144,14 @@ var BobSim = function(machine){
                         instrPush();
                         }
                     };
-                execInstr(sig,f);
+                execInstr(instr,sig,f);
                 break;
             case "call":
                 var sig = [argsSigIdApp];
                 var f = function(t){
                     var appArgs = instr.args[1];
-                    var off = calcOffset(instr.args[0]);
-                    var br = calcBr(off);
+                    var off = calcOffset(iarg(0),model.pos,labels);
+                    var br = calcBr(off,model.pos);
                     if(br !== 0){
                         pushStackFrame(appArgs.v);
                         }
@@ -2042,16 +2159,16 @@ var BobSim = function(machine){
                         popStackFrame();
                         }
                     model.pos.br = br;
-                    statusEval.traces.addJmp(instr,model,true);
+                    trackBranch(true);
                     };
-                execInstr(sig,f);
+                execInstr(instr,sig,f);
                 break;
             case "rcall":
                 var sig = [argsSigIdApp];
                 var f = function(t){
                     var appArgs = iarg(1);
-                    var off = calcOffset(iarg(0));
-                    var br = 0 - calcBr(off);
+                    var off = calcOffset(iarg(0),model.pos,labels);
+                    var br = 0 - calcBr(off,model.pos);
                     statusEval.traces.addJmp(instr,model,true);
                     if(br !== 0){
                         pushStackFrame(appArgs.v);
@@ -2061,8 +2178,9 @@ var BobSim = function(machine){
                         }
                     model.pos.revDir();
                     model.pos.br = br;
+                    trackBranch(true);
                     };
-                execInstr(sig,f);
+                execInstr(instr,sig,f);
                 break;
             case "swret":
                 // identical to SWBR
@@ -2079,12 +2197,12 @@ var BobSim = function(machine){
                     var msg = "manual stop";
                     statusEval.stop(instr,msg);
                     };
-                execInstr(sig,f);
+                execInstr(instr,sig,f);
                 break;
             case "nop":
                 var sig = [argsSigUnit];
                 var f = function(t){};
-                execInstr(sig,f);
+                execInstr(instr,sig,f);
                 break;
             default:
                 statusEval.failUnkInstr(instr);
@@ -2108,6 +2226,9 @@ var BobSim = function(machine){
             var instr = prg[pos.pc];
             evalInstr(model,instr,labels);
             updatePos(model.pos);
+            if(!statusEval.running){
+                break;
+                }
             if(model.pos.pc < 0){
                 var msg = "pc < 0";
                 statusEval.failPc(instr,msg);

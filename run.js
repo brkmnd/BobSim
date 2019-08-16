@@ -61,7 +61,16 @@ var checkOnExpected = function(expct,res,printfn){
     for(var i = 0; i < ks.length; i++){
         var k = ks[i];
         if(res[k] === undefined){
-            printfn("- " +  k + " is not present in resulting registers");
+            var msg = function(){
+                var ks0 = Object.keys(res);
+                var r = "- " +  k + " is not present in resulting registers\n"; 
+                r += "these are:\n";
+                for(var j = 0; j < ks0.length; j++){
+                    r += ks0[j] + " = " + res[ks0[j]] + "\n";
+                    }
+                return r
+                }();
+            printfn(msg);
             }
         else if(expct[k] !== res[k]){
             printfn("- "+k+" expected to be " + expct[k].toString() + " but is "+res[k].toString(),"red");
@@ -75,7 +84,7 @@ var prgs = document.getElementsByClassName("bobprg");
 var outs = document.getElementsByClassName("out");
 var errOuts = document.getElementsByClassName("error-out");
 var codeTables = document.getElementsByClassName("codetable");
-for(var i = 0; i < prgs.length; i++){
+var runTest = function(i){
     var machine = new Machine();
     var bob = new BobSim(machine);
     var prg = prgs[i].innerHTML;
@@ -103,4 +112,7 @@ for(var i = 0; i < prgs.length; i++){
         }
     checkOnExpected(expectedRes,filterRes,printfn);
     printPrg(prg,ctable);
+    };
+for(var i = 0; i < prgs.length; i++){
+    runTest(i);
     }
