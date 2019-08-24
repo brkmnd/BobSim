@@ -1,3 +1,7 @@
+/* - The tests for now have non-zeroed register
+ * this means that if test is run again on same simulator
+ * it will fail
+ * */
 var Printer = function(p){
     return function(str,c){
         if(c !== undefined){
@@ -93,10 +97,8 @@ var runTest = function(i){
     var ctable = codeTables[i];
     var filterRes = function(){
         var res = {};
-        machine.regs.foreach(function(r,v){
-            if(r.substr(0,4) === "res."){
-                res[r.substr(4)] = v;
-                }
+        bob.filterRes(function(r,v){
+            res[r] = v;
             });
         return res;
         }();

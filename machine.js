@@ -2,7 +2,7 @@ var Machine = function(){
     var pub = {};
     var memSize = 2000;
     pub.regs = function(){
-        var regs = {"spointer":0};
+        var regs = {};
         var ret = {};
         ret.read = function(r){
             if(regs[r] === undefined){
