@@ -1,4 +1,4 @@
-var BobSim = function(machine){
+var BobLang = function(machine){
     var actionType = {
         shift:function(d){
             return {type:"shift",v:d};
