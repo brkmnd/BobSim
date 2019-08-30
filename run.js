@@ -113,6 +113,12 @@ var runTest = function(i){
         printfn("success","green");
         }
     checkOnExpected(expectedRes,filterRes,printfn);
+    printfn("--non zero cleared registers:","#B45F04");
+    machine.regs.foreach(function(k,v){
+        if(v !== 0){
+            printfn("  reg["+k+"] = "+v.toString(),"#B45F04");
+            }
+        });
     printPrg(prg,ctable);
     };
 for(var i = 0; i < prgs.length; i++){
