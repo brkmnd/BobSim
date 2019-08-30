@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html>
+<head><style>.bobprg{display:none;font-family:monospace;white-space:pre}.error-out{color:red}.out{font-family:monospace;font-size:12pt;white-space:pre}h2{color:blue}.codetable{display:block;width:100%;height:300px;background-color:black;color:white;font-family:monospace;font-size:12pt;overflow-y:scroll;}</style></head>
+<body>
+<script>var results = [{"a":100},{"x":100,"y":154},{"x":100,"y":146},{"x":100,"y":154},{"x":100,"y":146},{"x":100,"y":146},{"x":100,"y":154},{"x":100,"y":154},{"x":100,"y":146},{"a@0":0,"a@1":1,"a@2":2,"a@3":3,"a@4":4,"a@5":5,"a@6":6,"a@7":7,"a@8":7,"a@9":0,"i":8},{"a@0":0,"a@1":-1,"a@2":-2,"a@3":-3,"a@4":-4,"a@5":-5,"a@6":-6,"a@7":-7,"a@8":-8,"a@9":-9,"i":0},{"a@0":0,"a@1":1,"a@2":2,"a@3":3,"a@4":4,"a@5":5,"a@6":6,"a@7":7,"a@8":8,"a@9":9,"i":9},{"a@0":0,"a@1":-1,"a@2":-2,"a@3":-3,"a@4":-4,"a@5":-5,"a@6":-6,"a@7":-7,"a@8":-8,"a@9":-9,"i":0},{"a@0":0,"a@1":1,"a@2":2,"a@3":3,"a@4":4,"a@5":5,"a@6":6,"a@7":7,"a@8":8,"a@9":9,"i":9},{"a@0":0,"a@1":-1,"a@2":-2,"a@3":-3,"a@4":-4,"a@5":-5,"a@6":-6,"a@7":-7,"a@8":-8,"a@9":-9,"i":0},{"a@9":9,"a@8":8,"a@7":7,"a@6":6,"a@5":5,"a@4":4,"a@3":3,"a@2":2,"a@1":1,"a@0":0},{"a@9":-9,"a@8":-8,"a@7":-7,"a@6":-6,"a@5":-5,"a@4":-4,"a@3":-3,"a@2":-2,"a@1":-1,"a@0":0},{"a@0":0,"a@1":1,"a@2":2,"a@3":3,"a@4":4,"a@5":5,"a@6":6,"a@7":7,"a@8":8,"a@9":9},{"a@0":0,"a@1":-1,"a@2":-2,"a@3":-3,"a@4":-4,"a@5":-5,"a@6":-6,"a@7":-7,"a@8":-8,"a@9":-9},{"i":4,"x@0":4,"x@1":5,"x@2":6,"x@3":7},{"i":0,"x@1":-1,"x@0":-2},{"i":4,"x@0":-9,"x@1":2,"x@2":3,"x@3":4},{"i":0,"x@0":1,"x@1":2,"x@2":3,"x@3":4},{"x@0":0,"x@1":0,"x@2":2,"x@3":1,"x@4":4,"x@5":4},{"x@5":4,"x@4":6,"x@3":1,"x@2":5,"x@1":0,"x@0":7},{"fact@19":0,"fact@18":0,"fact@17":0,"fact@16":0,"fact@15":0,"fact@14":0,"fact@13":0,"fact@12":0,"fact@11":0,"fact@10":0,"fact@9":0,"fact@8":0,"fact@7":0,"fact@6":7,"fact@5":5,"fact@4":3,"fact@3":2,"fact@2":2,"fact@1":2,"fact@0":0,"num":0},{"fact@19":0,"fact@18":0,"fact@17":0,"fact@16":0,"fact@15":0,"fact@14":0,"fact@13":0,"fact@12":0,"fact@11":0,"fact@10":0,"fact@9":0,"fact@8":0,"fact@7":0,"fact@6":0,"fact@5":0,"fact@4":0,"fact@3":0,"fact@2":0,"fact@1":0,"fact@0":0,"num":840},{"n":0,"x1":34,"x2":55},{"n":8,"x1":0,"x2":0},{"num":2,"root":8},{"num":625,"root":0},{"arc@13":0,"arc@12":0,"arc@11":0,"arc@10":0,"arc@9":0,"arc@8":0,"arc@7":0,"arc@6":0,"arc@5":1,"arc@4":1,"arc@3":3,"arc@2":2,"arc@1":2,"arc@0":1,"text@6":0,"text@5":0,"text@4":0,"text@3":0,"text@2":0,"text@1":0,"text@0":0},{"arc@13":0,"arc@12":0,"arc@11":0,"arc@10":0,"arc@9":0,"arc@8":0,"arc@7":0,"arc@6":0,"arc@5":0,"arc@4":0,"arc@3":0,"arc@2":0,"arc@1":0,"arc@0":0,"text@6":0,"text@5":1,"text@4":2,"text@3":2,"text@2":2,"text@1":1,"text@0":1},{"c@4":0,"c@3":0,"c@2":-100,"c@1":0,"c@0":0,"b":-200,"a":0,"z":-100,"y":154,"x":100}];</script>
+<h1>Testing Janus2Bob</h1>
+<h2>Empty program</h2>
+<span class='bobprg' style="display:none;"></span>
+<p class='out'></p>
+<p class='error-out'></p>
+<table class='codetable'></table>
+
+<h1>Half a Program #1</h1>
+<h2>if1</h2>
+<span class='bobprg'>
+bob.prg.entry:
+    CALL        main ()
+    STOP
+main.top:
+    BRA         main.bot
+    POP         $raddr
+</span>
+<p class='out'></p>
+<p class='error-out'></p>
+<table class='codetable'></table>
+<h1>Half a Program #2</h1>
+<h2>if1</h2>
+<span class='bobprg'>
+bob.prg.entry:
+    CALL        main ()
+    STOP
+main.top:
+    BRA         main.bot
+    POP         $raddr
+main:
+    SWRET       $raddr
+    NEG         $raddr
+    PUSH        $raddr
+    # main body
+    # main declarations
+    PUSH        $0
+    XOR         $num  $spointer
+    XORI        $main.0  20
+    PUSH        $main.0
+    XOR         $fact  $spointer
+    PUSH        $0
+    XOR         $fact@0  $spointer
+    PUSH        $0
+    XOR         $fact@1  $spointer
+    PUSH        $0
+    XOR         $fact@2  $spointer
+    PUSH        $0
+    XOR         $fact@3  $spointer
+    PUSH        $0
+    XOR         $fact@4  $spointer
+    PUSH        $0
+    XOR         $fact@5  $spointer
+    PUSH        $0
+    XOR         $fact@6  $spointer
+    PUSH        $0
+    XOR         $fact@7  $spointer
+    PUSH        $0
+    XOR         $fact@8  $spointer
+    PUSH        $0
+    XOR         $fact@9  $spointer
+    PUSH        $0
+    XOR         $fact@10  $spointer
+    PUSH        $0
+    XOR         $fact@11  $spointer
+    PUSH        $0
+    XOR         $fact@12  $spointer
+    PUSH        $0
+    XOR         $fact@13  $spointer
+    PUSH        $0
+    XOR         $fact@14  $spointer
+    PUSH        $0
+    XOR         $fact@15  $spointer
+    PUSH        $0
+    XOR         $fact@16  $spointer
+    PUSH        $0
+    XOR         $fact@17  $spointer
+    PUSH        $0
+    XOR         $fact@18  $spointer
+    PUSH        $0
+    XOR         $fact@19  $spointer
+    # num += 840
+    EXCH        $main.1  $num
+    XORI        $main.2  840
+    ADD         $main.1  $main.2
+    XORI        $main.2  840
+    EXCH        $main.1  $num
+    # /num += 840
+    CALL        factor  ($num,$fact)
+    # main undeclarations
+    XOR         $fact@19  $spointer
+    POP         $res.fact@19
+    XOR         $fact@18  $spointer
+    POP         $res.fact@18
+    XOR         $fact@17  $spointer
+    POP         $res.fact@17
+    XOR         $fact@16  $spointer
+    POP         $res.fact@16
+    XOR         $fact@15  $spointer
+    POP         $res.fact@15
+    XOR         $fact@14  $spointer
+    POP         $res.fact@14
+    XOR         $fact@13  $spointer
+    POP         $res.fact@13
+    XOR         $fact@12  $spointer
+    POP         $res.fact@12
+    XOR         $fact@11  $spointer
+    POP         $res.fact@11
+    XOR         $fact@10  $spointer
+    POP         $res.fact@10
+    XOR         $fact@9  $spointer
+    POP         $res.fact@9
+    XOR         $fact@8  $spointer
+    POP         $res.fact@8
+    XOR         $fact@7  $spointer
+    POP         $res.fact@7
+    XOR         $fact@6  $spointer
+    POP         $res.fact@6
+    XOR         $fact@5  $spointer
+    POP         $res.fact@5
+    XOR         $fact@4  $spointer
+    POP         $res.fact@4
+    XOR         $fact@3  $spointer
+    POP         $res.fact@3
+    XOR         $fact@2  $spointer
+    POP         $res.fact@2
+    XOR         $fact@1  $spointer
+    POP         $res.fact@1
+    XOR         $fact@0  $spointer
+    POP         $res.fact@0
+    XOR         $fact  $spointer
+    POP         $main.0
+    XORI        $main.0  20
+    XOR         $num  $spointer
+    POP         $res.num
+main.bot:
+    BRA         main.top
+factor.top:
+    BRA         factor.bot
+    POP         $raddr
+factor:
+    SWRET       $raddr
+    NEG         $raddr
+    PUSH        $raddr
+    # factor body
+    # local[try = 0](9, 5, 274)
+    XORI        $factor.1  0
+    XOR         $factor.0  $factor.1
+    PUSH        $factor.0
+    XOR         $factor.try.0  $spointer
+    XORI        $factor.1  0
+    # /local[try = 0](9, 5, 274)
+    # local[i = 0](10, 5, 319)
+    XORI        $factor.4  0
+    XOR         $factor.3  $factor.4
+    PUSH        $factor.3
+    XOR         $factor.i.0  $spointer
+    XORI        $factor.4  0
+    # /local[i = 0](10, 5, 319)
+    # from (&& (= try 0) (> num 1)) at (11, 5, 386)
+    # ampamp[0]
+    EXCH        $factor.6  $factor.try.0
+    XOR         $factor.7  $factor.6
+    EXCH        $factor.6  $factor.try.0
+    XORI        $factor.8  0
+    XOR         $factor.9  $factor.7
+factor.eq0_top_pre:
+    BEQ         $factor.9  $factor.8  factor.eq0_true_pre
+factor.eq0_false_pre:
+    BRA         factor.eq0_bot_pre
+factor.eq0_true_pre:
+    BRA         factor.eq0_top_pre
+    XORI        $factor.10  1
+factor.eq0_bot_pre:
+    BNEQ        $factor.9  $factor.8  factor.eq0_false_pre
+    # /factor.eq0_pre
+    EXCH        $factor.11  $arg0
+    XOR         $factor.12  $factor.11
+    EXCH        $factor.11  $arg0
+    XORI        $factor.13  1
+    XOR         $factor.14  $factor.12
+factor.gt1_top_pre:
+    BGT         $factor.14  $factor.13  factor.gt1_true_pre
+factor.gt1_false_pre:
+    BRA         factor.gt1_bot_pre
+factor.gt1_true_pre:
+    BRA         factor.gt1_top_pre
+    XORI        $factor.15  1
+factor.gt1_bot_pre:
+    BLEQ        $factor.14  $factor.13  factor.gt1_false_pre
+    # /factor.gt1_pre
+    AND         $factor.16  $factor.10  $factor.15
+factor.loop0_top:
+    BZ          $factor.16  factor.loop0_loop
+    AND         $factor.16  $factor.10  $factor.15
+factor.gt1_bot_post:
+    BLEQ        $factor.14  $factor.13  factor.gt1_false_post
+    XORI        $factor.15  1
+factor.gt1_true_post:
+    BRA         factor.gt1_top_post
+factor.gt1_false_post:
+    BRA         factor.gt1_bot_post
+factor.gt1_top_post:
+    BGT         $factor.14  $factor.13  factor.gt1_true_post
+    XOR         $factor.14  $factor.12
+    XORI        $factor.13  1
+    EXCH        $factor.11  $arg0
+    XOR         $factor.12  $factor.11
+    EXCH        $factor.11  $arg0
+factor.eq0_bot_post:
+    BNEQ        $factor.9  $factor.8  factor.eq0_false_post
+    XORI        $factor.10  1
+factor.eq0_true_post:
+    BRA         factor.eq0_top_post
+factor.eq0_false_post:
+    BRA         factor.eq0_bot_post
+factor.eq0_top_post:
+    BEQ         $factor.9  $factor.8  factor.eq0_true_post
+    XOR         $factor.9  $factor.7
+    XORI        $factor.8  0
+    EXCH        $factor.6  $factor.try.0
+    XOR         $factor.7  $factor.6
+    EXCH        $factor.6  $factor.try.0
+    # /ampamp[0]
+    # do-code
+    # skip
+    NOP         
+    # until (> (* try try) num) at (24, 5, 791)
+    # gt[4]
+    EXCH        $factor.17  $factor.try.0
+    XOR         $factor.18  $factor.17
+    EXCH        $factor.17  $factor.try.0
+    EXCH        $factor.19  $factor.try.0
+    XOR         $factor.20  $factor.19
+    EXCH        $factor.19  $factor.try.0
+    XOR         $factor.21  $factor.18
+    MUL         $factor.22  $factor.21  $factor.20
+    EXCH        $factor.23  $arg0
+    XOR         $factor.24  $factor.23
+    EXCH        $factor.23  $arg0
+factor.gt4_top_pre:
+    BGT         $factor.22  $factor.24  factor.gt4_true_pre
+factor.gt4_false_pre:
+    BRA         factor.gt4_bot_pre
+factor.gt4_true_pre:
+    BRA         factor.gt4_top_pre
+    XORI        $factor.25  1
+factor.gt4_bot_pre:
+    BLEQ        $factor.22  $factor.24  factor.gt4_false_pre
+    # /factor.gt4_pre
+factor.loop0_do:
+    BNZ         $factor.25  factor.loop0_bot
+factor.gt4_bot_post:
+    BLEQ        $factor.22  $factor.24  factor.gt4_false_post
+    XORI        $factor.25  1
+factor.gt4_true_post:
+    BRA         factor.gt4_top_post
+factor.gt4_false_post:
+    BRA         factor.gt4_bot_post
+factor.gt4_top_post:
+    BGT         $factor.22  $factor.24  factor.gt4_true_post
+    EXCH        $factor.23  $arg0
+    XOR         $factor.24  $factor.23
+    EXCH        $factor.23  $arg0
+    MUL         $factor.22  $factor.21  $factor.20
+    XOR         $factor.21  $factor.18
+    EXCH        $factor.19  $factor.try.0
+    XOR         $factor.20  $factor.19
+    EXCH        $factor.19  $factor.try.0
+    EXCH        $factor.17  $factor.try.0
+    XOR         $factor.18  $factor.17
+    EXCH        $factor.17  $factor.try.0
+    # /gt[4]
+    CALL        nexttry  ($factor.try.0)
+    # from (!= fact[i] try) at (15, 9, 471)
+    # neq[6]
+    # indexing fact[i](15, 18, 480)
+    EXCH        $factor.29  $factor.i.0
+    XOR         $factor.30  $factor.29
+    EXCH        $factor.29  $factor.i.0
+    XOR         $factor.26  $arg1
+    ADD         $factor.26  $factor.30
+    ADD1        $factor.26
+    EXCH        $factor.27  $factor.26
+    XOR         $factor.28  $factor.27
+    EXCH        $factor.27  $factor.26
+    # ind-expr
+    EXCH        $factor.31  $factor.try.0
+    XOR         $factor.32  $factor.31
+    EXCH        $factor.31  $factor.try.0
+factor.neq6_top_pre:
+    BNEQ        $factor.28  $factor.32  factor.neq6_true_pre
+factor.neq6_false_pre:
+    BRA         factor.neq6_bot_pre
+factor.neq6_true_pre:
+    BRA         factor.neq6_top_pre
+    XORI        $factor.33  1
+factor.neq6_bot_pre:
+    BEQ         $factor.28  $factor.32  factor.neq6_false_pre
+    # /factor.neq6_pre
+factor.loop1_top:
+    BZ          $factor.33  factor.loop1_loop
+factor.neq6_bot_post:
+    BEQ         $factor.28  $factor.32  factor.neq6_false_post
+    XORI        $factor.33  1
+factor.neq6_true_post:
+    BRA         factor.neq6_top_post
+factor.neq6_false_post:
+    BRA         factor.neq6_bot_post
+factor.neq6_top_post:
+    BNEQ        $factor.28  $factor.32  factor.neq6_true_post
+    EXCH        $factor.31  $factor.try.0
+    XOR         $factor.32  $factor.31
+    EXCH        $factor.31  $factor.try.0
+    # /ind-expr
+    EXCH        $factor.27  $factor.26
+    XOR         $factor.28  $factor.27
+    EXCH        $factor.27  $factor.26
+    SUB1        $factor.26
+    SUB         $factor.26  $factor.30
+    XOR         $factor.26  $arg1
+    EXCH        $factor.29  $factor.i.0
+    XOR         $factor.30  $factor.29
+    EXCH        $factor.29  $factor.i.0
+    # /indexing fact[i](15, 18, 480)
+    # /neq[6]
+    # do-code
+    # skip
+    NOP         
+    # until (!= (% num try) 0) at (23, 9, 764)
+    # neq[8]
+    EXCH        $factor.34  $arg0
+    XOR         $factor.35  $factor.34
+    EXCH        $factor.34  $arg0
+    EXCH        $factor.36  $factor.try.0
+    XOR         $factor.37  $factor.36
+    EXCH        $factor.36  $factor.try.0
+    XOR         $factor.38  $factor.35
+    MOD         $factor.39  $factor.38  $factor.37
+    XORI        $factor.40  0
+factor.neq8_top_pre:
+    BNEQ        $factor.39  $factor.40  factor.neq8_true_pre
+factor.neq8_false_pre:
+    BRA         factor.neq8_bot_pre
+factor.neq8_true_pre:
+    BRA         factor.neq8_top_pre
+    XORI        $factor.41  1
+factor.neq8_bot_pre:
+    BEQ         $factor.39  $factor.40  factor.neq8_false_pre
+    # /factor.neq8_pre
+factor.loop1_do:
+    BNZ         $factor.41  factor.loop1_bot
+factor.neq8_bot_post:
+    BEQ         $factor.39  $factor.40  factor.neq8_false_post
+    XORI        $factor.41  1
+factor.neq8_true_post:
+    BRA         factor.neq8_top_post
+factor.neq8_false_post:
+    BRA         factor.neq8_bot_post
+factor.neq8_top_post:
+    BNEQ        $factor.39  $factor.40  factor.neq8_true_post
+    XORI        $factor.40  0
+    MOD         $factor.39  $factor.38  $factor.37
+    XOR         $factor.38  $factor.35
+    EXCH        $factor.36  $factor.try.0
+    XOR         $factor.37  $factor.36
+    EXCH        $factor.36  $factor.try.0
+    EXCH        $factor.34  $arg0
+    XOR         $factor.35  $factor.34
+    EXCH        $factor.34  $arg0
+    # /neq[8]
+    # i += 1
+    EXCH        $factor.42  $factor.i.0
+    ADD1        $factor.42
+    EXCH        $factor.42  $factor.i.0
+    # /i += 1
+    # fact[i] += try
+    EXCH        $factor.45  $factor.i.0
+    XOR         $factor.46  $factor.45
+    EXCH        $factor.45  $factor.i.0
+    XOR         $factor.43  $arg1
+    ADD1        $factor.43
+    ADD         $factor.43  $factor.46
+    EXCH        $factor.44  $factor.43
+    EXCH        $factor.47  $factor.try.0
+    XOR         $factor.48  $factor.47
+    EXCH        $factor.47  $factor.try.0
+    ADD         $factor.44  $factor.48
+    EXCH        $factor.47  $factor.try.0
+    XOR         $factor.48  $factor.47
+    EXCH        $factor.47  $factor.try.0
+    EXCH        $factor.44  $factor.43
+    SUB         $factor.43  $factor.46
+    SUB1        $factor.43
+    XOR         $factor.43  $arg1
+    EXCH        $factor.45  $factor.i.0
+    XOR         $factor.46  $factor.45
+    EXCH        $factor.45  $factor.i.0
+    # /fact[i] += try
+    # local[z = (/ num try)](20, 13, 668)
+    EXCH        $factor.50  $arg0
+    XOR         $factor.51  $factor.50
+    EXCH        $factor.50  $arg0
+    EXCH        $factor.52  $factor.try.0
+    XOR         $factor.53  $factor.52
+    EXCH        $factor.52  $factor.try.0
+    XOR         $factor.54  $factor.51
+    DIV         $factor.55  $factor.54  $factor.53
+    XOR         $factor.49  $factor.55
+    PUSH        $factor.49
+    XOR         $factor.z.0  $spointer
+    DIV         $factor.55  $factor.54  $factor.53
+    XOR         $factor.54  $factor.51
+    EXCH        $factor.52  $factor.try.0
+    XOR         $factor.53  $factor.52
+    EXCH        $factor.52  $factor.try.0
+    EXCH        $factor.50  $arg0
+    XOR         $factor.51  $factor.50
+    EXCH        $factor.50  $arg0
+    # /local[z = (/ num try)](20, 13, 668)
+    # z <=> num
+    EXCH        $factor.62  $factor.z.0
+    EXCH        $factor.63  $arg0
+    SWAP        $factor.62  $factor.63
+    EXCH        $factor.63  $arg0
+    EXCH        $factor.62  $factor.z.0
+    # /z <=> num
+    # delocal[z = (* num try)](22, 27, 744)
+    EXCH        $factor.56  $arg0
+    XOR         $factor.57  $factor.56
+    EXCH        $factor.56  $arg0
+    EXCH        $factor.58  $factor.try.0
+    XOR         $factor.59  $factor.58
+    EXCH        $factor.58  $factor.try.0
+    XOR         $factor.60  $factor.57
+    MUL         $factor.61  $factor.60  $factor.59
+    XOR         $factor.z.0  $spointer
+    POP         $factor.49
+    XOR         $factor.49  $factor.61
+    MUL         $factor.61  $factor.60  $factor.59
+    XOR         $factor.60  $factor.57
+    EXCH        $factor.58  $factor.try.0
+    XOR         $factor.59  $factor.58
+    EXCH        $factor.58  $factor.try.0
+    EXCH        $factor.56  $arg0
+    XOR         $factor.57  $factor.56
+    EXCH        $factor.56  $arg0
+    # /delocal[z = (* num try)](22, 27, 744)
+    # neq[7]
+    # indexing fact[i](15, 18, 480)
+    EXCH        $factor.29  $factor.i.0
+    XOR         $factor.30  $factor.29
+    EXCH        $factor.29  $factor.i.0
+    XOR         $factor.26  $arg1
+    ADD         $factor.26  $factor.30
+    ADD1        $factor.26
+    EXCH        $factor.27  $factor.26
+    XOR         $factor.28  $factor.27
+    EXCH        $factor.27  $factor.26
+    # ind-expr
+    EXCH        $factor.31  $factor.try.0
+    XOR         $factor.32  $factor.31
+    EXCH        $factor.31  $factor.try.0
+factor.neq7_top_pre:
+    BNEQ        $factor.28  $factor.32  factor.neq7_true_pre
+factor.neq7_false_pre:
+    BRA         factor.neq7_bot_pre
+factor.neq7_true_pre:
+    BRA         factor.neq7_top_pre
+    XORI        $factor.33  1
+factor.neq7_bot_pre:
+    BEQ         $factor.28  $factor.32  factor.neq7_false_pre
+    # /factor.neq7_pre
+factor.loop1_loop:
+    BRA         factor.loop1_top
+factor.neq7_bot_post:
+    BEQ         $factor.28  $factor.32  factor.neq7_false_post
+    XORI        $factor.33  1
+factor.neq7_true_post:
+    BRA         factor.neq7_top_post
+factor.neq7_false_post:
+    BRA         factor.neq7_bot_post
+factor.neq7_top_post:
+    BNEQ        $factor.28  $factor.32  factor.neq7_true_post
+    EXCH        $factor.31  $factor.try.0
+    XOR         $factor.32  $factor.31
+    EXCH        $factor.31  $factor.try.0
+    # /ind-expr
+    EXCH        $factor.27  $factor.26
+    XOR         $factor.28  $factor.27
+    EXCH        $factor.27  $factor.26
+    SUB1        $factor.26
+    SUB         $factor.26  $factor.30
+    XOR         $factor.26  $arg1
+    EXCH        $factor.29  $factor.i.0
+    XOR         $factor.30  $factor.29
+    EXCH        $factor.29  $factor.i.0
+    # /indexing fact[i](15, 18, 480)
+    # /neq[7]
+    # neq[9]
+    EXCH        $factor.34  $arg0
+    XOR         $factor.35  $factor.34
+    EXCH        $factor.34  $arg0
+    EXCH        $factor.36  $factor.try.0
+    XOR         $factor.37  $factor.36
+    EXCH        $factor.36  $factor.try.0
+    XOR         $factor.38  $factor.35
+    MOD         $factor.39  $factor.38  $factor.37
+    XORI        $factor.40  0
+factor.neq9_top_pre:
+    BNEQ        $factor.39  $factor.40  factor.neq9_true_pre
+factor.neq9_false_pre:
+    BRA         factor.neq9_bot_pre
+factor.neq9_true_pre:
+    BRA         factor.neq9_top_pre
+    XORI        $factor.41  1
+factor.neq9_bot_pre:
+    BEQ         $factor.39  $factor.40  factor.neq9_false_pre
+    # /factor.neq9_pre
+factor.loop1_bot:
+    BRA         factor.loop1_do
+factor.neq9_bot_post:
+    BEQ         $factor.39  $factor.40  factor.neq9_false_post
+    XORI        $factor.41  1
+factor.neq9_true_post:
+    BRA         factor.neq9_top_post
+factor.neq9_false_post:
+    BRA         factor.neq9_bot_post
+factor.neq9_top_post:
+    BNEQ        $factor.39  $factor.40  factor.neq9_true_post
+    XORI        $factor.40  0
+    MOD         $factor.39  $factor.38  $factor.37
+    XOR         $factor.38  $factor.35
+    EXCH        $factor.36  $factor.try.0
+    XOR         $factor.37  $factor.36
+    EXCH        $factor.36  $factor.try.0
+    EXCH        $factor.34  $arg0
+    XOR         $factor.35  $factor.34
+    EXCH        $factor.34  $arg0
+    # /neq[9]
+    # ampamp[2]
+    EXCH        $factor.6  $factor.try.0
+    XOR         $factor.7  $factor.6
+    EXCH        $factor.6  $factor.try.0
+    XORI        $factor.8  0
+    XOR         $factor.9  $factor.7
+factor.eq2_top_pre:
+    BEQ         $factor.9  $factor.8  factor.eq2_true_pre
+factor.eq2_false_pre:
+    BRA         factor.eq2_bot_pre
+factor.eq2_true_pre:
+    BRA         factor.eq2_top_pre
+    XORI        $factor.10  1
+factor.eq2_bot_pre:
+    BNEQ        $factor.9  $factor.8  factor.eq2_false_pre
+    # /factor.eq2_pre
+    EXCH        $factor.11  $arg0
+    XOR         $factor.12  $factor.11
+    EXCH        $factor.11  $arg0
+    XORI        $factor.13  1
+    XOR         $factor.14  $factor.12
+factor.gt3_top_pre:
+    BGT         $factor.14  $factor.13  factor.gt3_true_pre
+factor.gt3_false_pre:
+    BRA         factor.gt3_bot_pre
+factor.gt3_true_pre:
+    BRA         factor.gt3_top_pre
+    XORI        $factor.15  1
+factor.gt3_bot_pre:
+    BLEQ        $factor.14  $factor.13  factor.gt3_false_pre
+    # /factor.gt3_pre
+    AND         $factor.16  $factor.10  $factor.15
+factor.loop0_loop:
+    BRA         factor.loop0_top
+    AND         $factor.16  $factor.10  $factor.15
+factor.gt3_bot_post:
+    BLEQ        $factor.14  $factor.13  factor.gt3_false_post
+    XORI        $factor.15  1
+factor.gt3_true_post:
+    BRA         factor.gt3_top_post
+factor.gt3_false_post:
+    BRA         factor.gt3_bot_post
+factor.gt3_top_post:
+    BGT         $factor.14  $factor.13  factor.gt3_true_post
+    XOR         $factor.14  $factor.12
+    XORI        $factor.13  1
+    EXCH        $factor.11  $arg0
+    XOR         $factor.12  $factor.11
+    EXCH        $factor.11  $arg0
+factor.eq2_bot_post:
+    BNEQ        $factor.9  $factor.8  factor.eq2_false_post
+    XORI        $factor.10  1
+factor.eq2_true_post:
+    BRA         factor.eq2_top_post
+factor.eq2_false_post:
+    BRA         factor.eq2_bot_post
+factor.eq2_top_post:
+    BEQ         $factor.9  $factor.8  factor.eq2_true_post
+    XOR         $factor.9  $factor.7
+    XORI        $factor.8  0
+    EXCH        $factor.6  $factor.try.0
+    XOR         $factor.7  $factor.6
+    EXCH        $factor.6  $factor.try.0
+    # /ampamp[2]
+    # gt[5]
+    EXCH        $factor.17  $factor.try.0
+    XOR         $factor.18  $factor.17
+    EXCH        $factor.17  $factor.try.0
+    EXCH        $factor.19  $factor.try.0
+    XOR         $factor.20  $factor.19
+    EXCH        $factor.19  $factor.try.0
+    XOR         $factor.21  $factor.18
+    MUL         $factor.22  $factor.21  $factor.20
+    EXCH        $factor.23  $arg0
+    XOR         $factor.24  $factor.23
+    EXCH        $factor.23  $arg0
+factor.gt5_top_pre:
+    BGT         $factor.22  $factor.24  factor.gt5_true_pre
+factor.gt5_false_pre:
+    BRA         factor.gt5_bot_pre
+factor.gt5_true_pre:
+    BRA         factor.gt5_top_pre
+    XORI        $factor.25  1
+factor.gt5_bot_pre:
+    BLEQ        $factor.22  $factor.24  factor.gt5_false_pre
+    # /factor.gt5_pre
+factor.loop0_bot:
+    BRA         factor.loop0_do
+factor.gt5_bot_post:
+    BLEQ        $factor.22  $factor.24  factor.gt5_false_post
+    XORI        $factor.25  1
+factor.gt5_true_post:
+    BRA         factor.gt5_top_post
+factor.gt5_false_post:
+    BRA         factor.gt5_bot_post
+factor.gt5_top_post:
+    BGT         $factor.22  $factor.24  factor.gt5_true_post
+    EXCH        $factor.23  $arg0
+    XOR         $factor.24  $factor.23
+    EXCH        $factor.23  $arg0
+    MUL         $factor.22  $factor.21  $factor.20
+    XOR         $factor.21  $factor.18
+    EXCH        $factor.19  $factor.try.0
+    XOR         $factor.20  $factor.19
+    EXCH        $factor.19  $factor.try.0
+    EXCH        $factor.17  $factor.try.0
+    XOR         $factor.18  $factor.17
+    EXCH        $factor.17  $factor.try.0
+    # /gt[5]
+    # if[0]
+    # if[0]((!= num 1))
+    # neq[10]
+    EXCH        $factor.64  $arg0
+    XOR         $factor.65  $factor.64
+    EXCH        $factor.64  $arg0
+    XORI        $factor.66  1
+factor.neq10_top_pre:
+    BNEQ        $factor.65  $factor.66  factor.neq10_true_pre
+factor.neq10_false_pre:
+    BRA         factor.neq10_bot_pre
+factor.neq10_true_pre:
+    BRA         factor.neq10_top_pre
+    XORI        $factor.67  1
+factor.neq10_bot_pre:
+    BEQ         $factor.65  $factor.66  factor.neq10_false_pre
+    # /factor.neq10_pre
+factor.if0_top:
+    BZ          $factor.67  factor.if0_else
+factor.neq10_bot_post:
+    BEQ         $factor.65  $factor.66  factor.neq10_false_post
+    XORI        $factor.67  1
+factor.neq10_true_post:
+    BRA         factor.neq10_top_post
+factor.neq10_false_post:
+    BRA         factor.neq10_bot_post
+factor.neq10_top_post:
+    BNEQ        $factor.65  $factor.66  factor.neq10_true_post
+    XORI        $factor.66  1
+    EXCH        $factor.64  $arg0
+    XOR         $factor.65  $factor.64
+    EXCH        $factor.64  $arg0
+    # /neq[10]
+factor.if0_if:
+    # i += 1
+    EXCH        $factor.79  $factor.i.0
+    ADD1        $factor.79
+    EXCH        $factor.79  $factor.i.0
+    # /i += 1
+    # fact[i] ^= num
+    EXCH        $factor.82  $factor.i.0
+    XOR         $factor.83  $factor.82
+    EXCH        $factor.82  $factor.i.0
+    XOR         $factor.80  $arg1
+    ADD1        $factor.80
+    ADD         $factor.80  $factor.83
+    EXCH        $factor.81  $factor.80
+    EXCH        $factor.84  $arg0
+    XOR         $factor.85  $factor.84
+    EXCH        $factor.84  $arg0
+    XOR         $factor.81  $factor.85
+    EXCH        $factor.84  $arg0
+    XOR         $factor.85  $factor.84
+    EXCH        $factor.84  $arg0
+    EXCH        $factor.81  $factor.80
+    SUB         $factor.80  $factor.83
+    SUB1        $factor.80
+    XOR         $factor.80  $arg1
+    EXCH        $factor.82  $factor.i.0
+    XOR         $factor.83  $factor.82
+    EXCH        $factor.82  $factor.i.0
+    # /fact[i] ^= num
+    # num ^= fact[i]
+    EXCH        $factor.86  $arg0
+    # indexing fact[i](29, 24, 1051)
+    EXCH        $factor.90  $factor.i.0
+    XOR         $factor.91  $factor.90
+    EXCH        $factor.90  $factor.i.0
+    XOR         $factor.87  $arg1
+    ADD         $factor.87  $factor.91
+    ADD1        $factor.87
+    EXCH        $factor.88  $factor.87
+    XOR         $factor.89  $factor.88
+    EXCH        $factor.88  $factor.87
+    # ind-expr
+    XOR         $factor.86  $factor.89
+    # /ind-expr
+    EXCH        $factor.88  $factor.87
+    XOR         $factor.89  $factor.88
+    EXCH        $factor.88  $factor.87
+    SUB1        $factor.87
+    SUB         $factor.87  $factor.91
+    XOR         $factor.87  $arg1
+    EXCH        $factor.90  $factor.i.0
+    XOR         $factor.91  $factor.90
+    EXCH        $factor.90  $factor.i.0
+    # /indexing fact[i](29, 24, 1051)
+    EXCH        $factor.86  $arg0
+    # /num ^= fact[i]
+    # fact[i] ^= num
+    EXCH        $factor.94  $factor.i.0
+    XOR         $factor.95  $factor.94
+    EXCH        $factor.94  $factor.i.0
+    XOR         $factor.92  $arg1
+    ADD1        $factor.92
+    ADD         $factor.92  $factor.95
+    EXCH        $factor.93  $factor.92
+    EXCH        $factor.96  $arg0
+    XOR         $factor.97  $factor.96
+    EXCH        $factor.96  $arg0
+    XOR         $factor.93  $factor.97
+    EXCH        $factor.96  $arg0
+    XOR         $factor.97  $factor.96
+    EXCH        $factor.96  $arg0
+    EXCH        $factor.93  $factor.92
+    SUB         $factor.92  $factor.95
+    SUB1        $factor.92
+    XOR         $factor.92  $arg1
+    EXCH        $factor.94  $factor.i.0
+    XOR         $factor.95  $factor.94
+    EXCH        $factor.94  $factor.i.0
+    # /fact[i] ^= num
+    # neq[13]
+    # indexing fact[i](33, 12, 1115)
+    EXCH        $factor.71  $factor.i.0
+    XOR         $factor.72  $factor.71
+    EXCH        $factor.71  $factor.i.0
+    XOR         $factor.68  $arg1
+    ADD         $factor.68  $factor.72
+    ADD1        $factor.68
+    EXCH        $factor.69  $factor.68
+    XOR         $factor.70  $factor.69
+    EXCH        $factor.69  $factor.68
+    # ind-expr
+    # indexing fact[(- i 1)](33, 23, 1126)
+    EXCH        $factor.76  $factor.i.0
+    XOR         $factor.77  $factor.76
+    EXCH        $factor.76  $factor.i.0
+    SUB         $factor.77  1
+    XOR         $factor.73  $arg1
+    ADD         $factor.73  $factor.77
+    ADD1        $factor.73
+    EXCH        $factor.74  $factor.73
+    XOR         $factor.75  $factor.74
+    EXCH        $factor.74  $factor.73
+    # ind-expr
+factor.neq13_top_pre:
+    BNEQ        $factor.70  $factor.75  factor.neq13_true_pre
+factor.neq13_false_pre:
+    BRA         factor.neq13_bot_pre
+factor.neq13_true_pre:
+    BRA         factor.neq13_top_pre
+    XORI        $factor.78  1
+factor.neq13_bot_pre:
+    BEQ         $factor.70  $factor.75  factor.neq13_false_pre
+    # /factor.neq13_pre
+factor.if0_then:
+    BRA         factor.if0_bot
+    # neq[11]
+    EXCH        $factor.64  $arg0
+    XOR         $factor.65  $factor.64
+    EXCH        $factor.64  $arg0
+    XORI        $factor.66  1
+factor.neq11_top_pre:
+    BNEQ        $factor.65  $factor.66  factor.neq11_true_pre
+factor.neq11_false_pre:
+    BRA         factor.neq11_bot_pre
+factor.neq11_true_pre:
+    BRA         factor.neq11_top_pre
+    XORI        $factor.67  1
+factor.neq11_bot_pre:
+    BEQ         $factor.65  $factor.66  factor.neq11_false_pre
+    # /factor.neq11_pre
+factor.if0_else:
+    BRA         factor.if0_top
+factor.neq11_bot_post:
+    BEQ         $factor.65  $factor.66  factor.neq11_false_post
+    XORI        $factor.67  1
+factor.neq11_true_post:
+    BRA         factor.neq11_top_post
+factor.neq11_false_post:
+    BRA         factor.neq11_bot_post
+factor.neq11_top_post:
+    BNEQ        $factor.65  $factor.66  factor.neq11_true_post
+    XORI        $factor.66  1
+    EXCH        $factor.64  $arg0
+    XOR         $factor.65  $factor.64
+    EXCH        $factor.64  $arg0
+    # /neq[11]
+    # num -= 1
+    EXCH        $factor.98  $arg0
+    SUB1        $factor.98
+    EXCH        $factor.98  $arg0
+    # /num -= 1
+    # fi[0]((!= fact[i] fact[(- i 1)]))
+    # neq[12]
+  
+</span>
+<p class='out'></p>
+<p class='error-out'></p>
+<table class='codetable'></table>
+
+
+<script src='stack.js'></script><script src='machine.js'></script><script src='bob.js'></script><script src='run.js'></script>
+</body>
+</html>

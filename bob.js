@@ -1471,6 +1471,12 @@ var BobLang = function(machine){
                     statusEval.errorType = "general";
                     }
                 },
+            failEmptyPrg:function(){
+                statusEval.running = false;
+                statusEval.error = true;
+                statusEval.msgError = "error: empty program";
+                statusEval.errorType = "general";
+                },
             failSegfault:function(instr){
                 statusEval.fail(instr,"segfault");
                 },
@@ -1647,7 +1653,7 @@ var BobLang = function(machine){
         pos.pc -= pos.br;
         return pos;
         };
-    var calcOffset = function(arg,pos,labels){
+    var calcOffset = function(arg,pos,labels,instr){
         var pc = pos.pc;
         var i = 0;
         switch(arg.type){
@@ -1657,11 +1663,11 @@ var BobLang = function(machine){
                 if(i === undefined){
                     var msg = "label '"+l+"' not defined";
                     statusEval.fail(instr,msg);
-                    return 0;
+                    return -1;
                     }
                 break;
             default:
-                alert("not yet in calcOffset");
+                //alert("not yet in calcOffset");
                 break;
             }
         return i - pc;
@@ -1734,10 +1740,14 @@ var BobLang = function(machine){
         };
     var popStackFrame = function(){ 
         var frame = machine.stackFrame.pop();
+        if(frame === null){
+            return false;
+            }
         for(var i = 0; i < frame.length; i++){
             var arg = frame[i];
             machine.regs.write(arg.name,arg.v);
             }
+        return true;
         };
     var checkArgType = function(instr,sig){
         if(instr.givenSig === undefined){
@@ -2018,7 +2028,7 @@ var BobLang = function(machine){
             case "bra":
                 var sig = [argsSigId];
                 var f = function(t){
-                    var off = calcOffset(iarg(0),model.pos,labels);
+                    var off = calcOffset(iarg(0),model.pos,labels,instr);
                     model.pos.br = calcBr(off,model.pos);
                     trackBranch(true);
                     };
@@ -2028,7 +2038,7 @@ var BobLang = function(machine){
                 var sig = [argsSigId];
                 var f = function(){
                     // first br then change dir
-                    var off = calcOffset(iarg(0),model.pos,labels);
+                    var off = calcOffset(iarg(0),model.pos,labels,instr);
                     model.pos.br = 0 - calcBr(off,model.pos);
                     model.pos.revDir();
                     trackTrace(true);
@@ -2041,7 +2051,7 @@ var BobLang = function(machine){
                     var a = argRead(iarg(0));
                     var p = a === 0;
                     if(p){
-                        var off = calcOffset(iarg(1),model.pos,labels);
+                        var off = calcOffset(iarg(1),model.pos,labels,instr);
                         model.pos.br = calcBr(off,model.pos);
                         }
                     trackBranch(p);
@@ -2054,7 +2064,7 @@ var BobLang = function(machine){
                     var a = argRead(iarg(0));
                     var p = a !== 0;
                     if(p){
-                        var off = calcOffset(iarg(1),model.pos,labels);
+                        var off = calcOffset(iarg(1),model.pos,labels,instr);
                         model.pos.br = calcBr(off,model.pos);
                         }
                     trackBranch(p);
@@ -2068,7 +2078,7 @@ var BobLang = function(machine){
                     var b = argRead(instr.args[1]);
                     var p = a === b;
                     if(p){
-                        var off = calcOffset(iarg(2),model.pos,labels);
+                        var off = calcOffset(iarg(2),model.pos,labels,instr);
                         model.pos.br = calcBr(off,model.pos);
                         }
                     trackBranch(p);
@@ -2082,7 +2092,7 @@ var BobLang = function(machine){
                     var b = argRead(instr.args[1]);
                     var p = a !== b;
                     if(p){
-                        var off = calcOffset(iarg(2),model.pos,labels);
+                        var off = calcOffset(iarg(2),model.pos,labels,instr);
                         model.pos.br = calcBr(off,model.pos);
                         }
                     trackBranch(p);
@@ -2096,7 +2106,7 @@ var BobLang = function(machine){
                     var b = argRead(instr.args[1]);
                     var p = a > b;
                     if(p){
-                        var off = calcOffset(iarg(2),model.pos,labels);
+                        var off = calcOffset(iarg(2),model.pos,labels,instr);
                         model.pos.br = calcBr(off,model.pos);
                         }
                     trackBranch(p);
@@ -2110,7 +2120,7 @@ var BobLang = function(machine){
                     var b = argRead(iarg(1));
                     var p = a >= b;
                     if(p){
-                        var off = calcOffset(iarg(2),model.pos,labels);
+                        var off = calcOffset(iarg(2),model.pos,labels,instr);
                         model.pos.br = calcBr(off,model.pos);
                         }
                     trackBranch(p);
@@ -2124,7 +2134,7 @@ var BobLang = function(machine){
                     var b = argRead(iarg(1));
                     var p = a < b;
                     if(p){
-                        var off = calcOffset(iarg(2),model.pos,labels);
+                        var off = calcOffset(iarg(2),model.pos,labels,instr);
                         model.pos.br = calcBr(off,model.pos);
                         }
                     trackBranch(p);
@@ -2138,7 +2148,7 @@ var BobLang = function(machine){
                     var b = argRead(instr.args[1]);
                     var p = a <= b;
                     if(p){
-                        var off = calcOffset(iarg(2),model.pos,labels);
+                        var off = calcOffset(iarg(2),model.pos,labels,instr);
                         model.pos.br = calcBr(off,model.pos);
                         }
                     trackBranch(p);
@@ -2173,7 +2183,7 @@ var BobLang = function(machine){
                 var sig = [argsSigIdApp];
                 var f = function(t){
                     var appArgs = instr.args[1];
-                    var off = calcOffset(iarg(0),model.pos,labels);
+                    var off = calcOffset(iarg(0),model.pos,labels,instr);
                     var br = calcBr(off,model.pos);
                     if(br !== 0){
                         pushStackFrame(appArgs.v);
@@ -2190,7 +2200,7 @@ var BobLang = function(machine){
                 var sig = [argsSigIdApp];
                 var f = function(t){
                     var appArgs = iarg(1);
-                    var off = calcOffset(iarg(0),model.pos,labels);
+                    var off = calcOffset(iarg(0),model.pos,labels,instr);
                     var br = 0 - calcBr(off,model.pos);
                     statusEval.traces.addJmp(instr,model,true);
                     if(br !== 0){
@@ -2244,6 +2254,9 @@ var BobLang = function(machine){
             };
         var model = {mem:machine.mem,regs:machine.regs,pos:pos};
         statusEval.prgLen = prg.length;
+        if(prg.length === 0){
+            statusEval.failEmptyPrg()
+            }
         while(statusEval.running){
             var instr = prg[pos.pc];
             evalInstr(model,instr,labels);
