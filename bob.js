@@ -1410,6 +1410,7 @@ var BobLang = function(machine){
      *  - traces to be used for keeping track of jumps etc.
      * */
     var StatusEval = function(){
+        var echoes = [];
         return {
             prgLen:0,
             errorType:null,
@@ -1417,6 +1418,15 @@ var BobLang = function(machine){
             error:false,
             msgError:null,
             msgStatus:null,
+            foreachEchoes:function(f){
+                for(var i = 0; i < echoes.length; i++){
+                    f(echoes[i]);
+                    }
+                },
+            addEcho:function(instr,e){
+                var msg = "echo at "+printPos(instr.pos)+": "+e;
+                echoes.push(msg);
+                },
             stats:{
                 instrExecs:0,
                 instrCount:0,
@@ -1593,6 +1603,7 @@ var BobLang = function(machine){
         return res;
         };
     var argsSigUnit = args2typeSig([]);
+    var argsSigImm = args2typeSig([dummyArgImm]);
     var argsSigReg = args2typeSig([dummyArgReg]);
     var argsSigRegReg = args2typeSig([dummyArgReg,dummyArgReg]);
     var argsSigRegId = args2typeSig([dummyArgReg,dummyArgId]);
@@ -1608,6 +1619,7 @@ var BobLang = function(machine){
         dummyArgId
         ]);
     var argsSigId = args2typeSig([dummyArgId]);
+    var argsSigMem = args2typeSig([dummyArgMem]);
     var argsSigMemId = args2typeSig([
         dummyArgMem,
         dummyArgId
@@ -2235,6 +2247,27 @@ var BobLang = function(machine){
             case "nop":
                 var sig = [argsSigUnit];
                 var f = function(t){};
+                execInstr(instr,sig,f);
+                break;
+            // error handling / misc
+            case "echo":
+                // if id, echo offset
+                var sig = [
+                    argsSigMem,
+                    argsSigImm,
+                    argsSigId,
+                    argsSigReg
+                    ];
+                var f = function(t){
+                    var a = iarg(0);
+                    var v = function(){
+                        if(a.type === "id"){
+                            return calcOffset(a,model.pos,labels,instr).toString();
+                            }
+                        return argRead(iarg(0)).toString();
+                        }();
+                    statusEval.addEcho(instr,v);
+                    };
                 execInstr(instr,sig,f);
                 break;
             default:

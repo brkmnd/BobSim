@@ -103,6 +103,10 @@ var runTest = function(i){
         return res;
         }();
     var expectedRes = results[i];
+    printfn("--echoes:");
+    evaled.statusEval.foreachEchoes(function(e){
+        printfn("  "+e);
+        });
     if(evaled.error){
         printfn(evaled.msg,"red");
         if(evaled.statusEval.errorType === "pc"){
