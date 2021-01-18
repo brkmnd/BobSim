@@ -1,4 +1,4 @@
-# Simulator for the reversible instruction architecture set Bob
+# Simulator for the reversible instruction set architecture Bob
 
 A simulator written in Java Script for the reversible instruction set Bob. The project is described at
 
