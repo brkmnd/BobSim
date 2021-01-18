@@ -1,6 +1,8 @@
-# Bob Simulator
+# Simulator for the reversible instruction architecture set Bob
 
-A simulator written in Java Script for the reversible instruction set Bob. The project is described at http://brkmnd.com/pages/projects/Default.aspx?id=37
+A simulator written in Java Script for the reversible instruction set Bob. The project is described at
+
+https://brkmnd.com/pages/projects/Default.aspx?id=37
 
 You can run the tests by simply opening the tests.html
 The run.js file contains code for initializing the simulator.
